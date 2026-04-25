@@ -1,17 +1,16 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  float,
+  boolean,
+} from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -25,4 +24,97 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+// ─── Wardrobe Items ────────────────────────────────────────────────────────────
+
+export const wardrobeItems = mysqlTable("wardrobe_items", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  brand: varchar("brand", { length: 255 }),
+  category: mysqlEnum("category", [
+    "tops",
+    "bottoms",
+    "outerwear",
+    "shoes",
+    "accessories",
+    "bags",
+    "dresses",
+    "suits",
+    "activewear",
+    "other",
+  ])
+    .default("other")
+    .notNull(),
+  color: varchar("color", { length: 100 }),
+  size: varchar("size", { length: 50 }),
+  purchasePrice: float("purchasePrice"),
+  currentPrice: float("currentPrice"),
+  currency: varchar("currency", { length: 10 }).default("USD"),
+  purchaseDate: timestamp("purchaseDate"),
+  imageUrl: text("imageUrl"),
+  imageKey: text("imageKey"),
+  buyUrl: text("buyUrl"),
+  personalNote: text("personalNote"),
+  isLoved: boolean("isLoved").default(false).notNull(),
+  wearCount: int("wearCount").default(0).notNull(),
+  lastWornAt: timestamp("lastWornAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WardrobeItem = typeof wardrobeItems.$inferSelect;
+export type InsertWardrobeItem = typeof wardrobeItems.$inferInsert;
+
+// ─── Item Tags ─────────────────────────────────────────────────────────────────
+
+export const itemTags = mysqlTable("item_tags", {
+  id: int("id").autoincrement().primaryKey(),
+  itemId: int("itemId").notNull(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 100 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ItemTag = typeof itemTags.$inferSelect;
+export type InsertItemTag = typeof itemTags.$inferInsert;
+
+// ─── Price History ─────────────────────────────────────────────────────────────
+
+export const priceHistory = mysqlTable("price_history", {
+  id: int("id").autoincrement().primaryKey(),
+  itemId: int("itemId").notNull(),
+  userId: int("userId").notNull(),
+  price: float("price").notNull(),
+  currency: varchar("currency", { length: 10 }).default("USD"),
+  note: varchar("note", { length: 255 }),
+  recordedAt: timestamp("recordedAt").defaultNow().notNull(),
+});
+
+export type PriceHistory = typeof priceHistory.$inferSelect;
+export type InsertPriceHistory = typeof priceHistory.$inferInsert;
+
+// ─── Outfits ───────────────────────────────────────────────────────────────────
+
+export const outfits = mysqlTable("outfits", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  totalPrice: float("totalPrice"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Outfit = typeof outfits.$inferSelect;
+export type InsertOutfit = typeof outfits.$inferInsert;
+
+// ─── Outfit Items ──────────────────────────────────────────────────────────────
+
+export const outfitItems = mysqlTable("outfit_items", {
+  id: int("id").autoincrement().primaryKey(),
+  outfitId: int("outfitId").notNull(),
+  itemId: int("itemId").notNull(),
+  slot: mysqlEnum("slot", ["head", "top", "bottom", "shoes", "accessory"]).notNull(),
+});
+
+export type OutfitItem = typeof outfitItems.$inferSelect;
+export type InsertOutfitItem = typeof outfitItems.$inferInsert;
