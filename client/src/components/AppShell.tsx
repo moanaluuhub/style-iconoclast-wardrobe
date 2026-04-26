@@ -8,7 +8,7 @@ import CartPanel from "./CartPanel";
 
 const NAV_ITEMS = [
   { href: "/", label: "Wardrobe" },
-  { href: "/canvas", label: "Canvas" },
+  { href: "/canvas", label: "Build your Look" },
   { href: "/outfits", label: "Outfits" },
   { href: "/designers", label: "Designers" },
   { href: "/stats", label: "Statistics" },

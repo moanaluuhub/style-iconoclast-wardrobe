@@ -282,7 +282,7 @@ export default function CanvasPage() {
     <div className="container py-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8 border-b border-[#EDEDED] pb-6">
-        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Canvas</h1>
+        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Build your Look</h1>
         <p className="text-[12px] text-[#ACABAB] mt-1 tracking-wide">
           Compose an outfit from your wardrobe
         </p>

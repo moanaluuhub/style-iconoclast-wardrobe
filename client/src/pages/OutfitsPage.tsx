@@ -700,13 +700,13 @@ export default function OutfitsPage() {
         <div className="text-center py-24">
           <p className="text-[13px] text-[#ACABAB] tracking-wide mb-2">No outfits yet</p>
           <p className="text-[11px] text-[#DEDEDE] mb-6">
-            Compose your first look on the canvas
+            Compose your first look in Build your Look
           </p>
           <button
             onClick={() => navigate("/canvas")}
             className="text-[10px] tracking-[0.14em] uppercase px-6 py-2.5 border border-black text-black hover:bg-black hover:text-white transition-colors gap-1.5 inline-flex items-center"
           >
-            <Layers size={12} /> Open canvas
+            <Layers size={12} /> Build your Look
           </button>
         </div>
       ) : (
