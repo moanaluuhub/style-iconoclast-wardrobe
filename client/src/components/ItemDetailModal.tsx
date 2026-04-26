@@ -47,13 +47,13 @@ function PriceSparkline({ history }: { history: { price: number; recordedAt: Dat
   const first = prices[0];
   const isUp = last > first;
   const isDown = last < first;
-  const color = isUp ? "#dc2626" : isDown ? "#059669" : "#78716c";
+  const color = isUp ? "#000000" : isDown ? "#5A5A5A" : "#ACABAB";
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs tracking-widest uppercase text-muted-foreground">Price history</span>
-        <span className={`text-xs font-medium ${isUp ? "text-red-600" : isDown ? "text-emerald-700" : "text-stone-500"}`}>
+        <span className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Price history</span>
+        <span className={`text-[10px] font-medium ${isUp ? "text-black" : isDown ? "text-[#5A5A5A]" : "text-[#ACABAB]"}`}>
           {isUp ? "↑" : isDown ? "↓" : "→"}{" "}
           {(((last - first) / first) * 100).toFixed(1)}% since added
         </span>
@@ -184,7 +184,7 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 rounded-none border-[#DEDEDE]">
           {isLoading || !item ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="animate-spin text-muted-foreground" size={24} />
@@ -192,7 +192,7 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
           ) : (
             <>
               {/* Image */}
-              <div className="relative bg-muted overflow-hidden rounded-t-sm" style={{ aspectRatio: "4/5" }}>
+              <div className="relative bg-[#F5F5F5] overflow-hidden" style={{ aspectRatio: "4/5" }}>
                 {item.imageUrl ? (
                   <img
                     src={item.imageUrl}
@@ -200,8 +200,8 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-muted to-accent/30 flex items-center justify-center">
-                    <span className="font-serif text-7xl text-muted-foreground/20">
+                  <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                    <span className="text-7xl font-light text-[#DEDEDE]">
                       {item.title?.[0] ?? "?"}
                     </span>
                   </div>
@@ -209,20 +209,20 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                 {/* Love button */}
                 <button
                   onClick={() => toggleLove.mutate({ id: item.id, isLoved: !item.isLoved })}
-                  className="absolute top-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors"
+                  className="absolute top-3 right-3 bg-white/90 p-2 hover:bg-white transition-colors"
                 >
                   <Heart
                     size={16}
                     fill={item.isLoved ? "currentColor" : "none"}
-                    className={item.isLoved ? "text-rose-500" : "text-muted-foreground"}
+                    className="text-black"
                   />
                 </button>
                 {/* Close button */}
                 <button
                   onClick={onClose}
-                  className="absolute top-3 left-3 bg-background/80 backdrop-blur-sm rounded-full p-2 hover:bg-background transition-colors"
+                  className="absolute top-3 left-3 bg-white/90 p-2 hover:bg-white transition-colors"
                 >
-                  <X size={16} className="text-muted-foreground" />
+                  <X size={16} className="text-black" />
                 </button>
               </div>
 
@@ -231,26 +231,20 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                 {/* Header */}
                 <div>
                   {item.brand && (
-                    <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-1">
+                    <p className="text-[10px] tracking-[0.14em] uppercase text-black font-medium mb-1">
                       {item.brand}
                     </p>
                   )}
-                  <h2 className="font-serif text-2xl leading-tight">{item.title}</h2>
+                  <h2 className="text-[15px] font-light leading-snug text-black">{item.title}</h2>
                   <div className="flex items-center gap-2 mt-2">
                     {currentPrice != null && (
-                      <span className="text-sm text-foreground">
+                      <span className="text-[13px] font-medium text-black">
                         {item.currency ?? "USD"} {currentPrice.toLocaleString()}
                       </span>
                     )}
                     {priceTrend && (
                       <span
-                        className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-sm ${
-                          priceTrend.isUp
-                            ? "bg-red-50 text-red-600"
-                            : priceTrend.isDown
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-stone-100 text-stone-500"
-                        }`}
+                        className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-[#F5F5F5] text-[#5A5A5A] tracking-wider"
                       >
                         {priceTrend.isUp ? <TrendingUp size={9} /> : priceTrend.isDown ? <TrendingDown size={9} /> : <Minus size={9} />}
                         {priceTrend.pct > 0 ? "+" : ""}{priceTrend.pct.toFixed(1)}%
@@ -260,110 +254,102 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                 </div>
 
                 {/* Meta grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-2 gap-3 border-t border-[#EDEDED] pt-4">
                   {item.category && (
                     <div>
-                      <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Category</span>
-                      <p className="capitalize mt-0.5">{item.category}</p>
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Category</span>
+                      <p className="text-[12px] capitalize mt-0.5 text-black">{item.category}</p>
                     </div>
                   )}
                   {item.color && (
                     <div>
-                      <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Color</span>
-                      <p className="capitalize mt-0.5">{item.color}</p>
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Color</span>
+                      <p className="text-[12px] capitalize mt-0.5 text-black">{item.color}</p>
                     </div>
                   )}
                   {item.size && (
                     <div>
-                      <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Size</span>
-                      <p className="mt-0.5">{item.size}</p>
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Size</span>
+                      <p className="text-[12px] mt-0.5 text-black">{item.size}</p>
                     </div>
                   )}
                   {item.purchasePrice != null && (
                     <div>
-                      <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Paid</span>
-                      <p className="mt-0.5">{item.currency} {item.purchasePrice.toLocaleString()}</p>
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Paid</span>
+                      <p className="text-[12px] mt-0.5 text-black">{item.currency} {item.purchasePrice.toLocaleString()}</p>
                     </div>
                   )}
                   {item.purchaseDate && (
                     <div>
-                      <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Purchased</span>
-                      <p className="mt-0.5">{new Date(item.purchaseDate).toLocaleDateString()}</p>
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Purchased</span>
+                      <p className="text-[12px] mt-0.5 text-black">{new Date(item.purchaseDate).toLocaleDateString()}</p>
                     </div>
                   )}
                   <div>
-                    <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Worn</span>
-                    <p className="mt-0.5">{item.wearCount} {item.wearCount === 1 ? "time" : "times"}</p>
+                    <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Worn</span>
+                    <p className="text-[12px] mt-0.5 text-black">{item.wearCount} {item.wearCount === 1 ? "time" : "times"}</p>
                   </div>
                   {item.purchasePrice && item.wearCount > 0 && (
                     <div>
-                      <span className="text-muted-foreground tracking-wider uppercase text-[10px]">Cost / wear</span>
-                      <p className="mt-0.5">{item.currency} {(item.purchasePrice / item.wearCount).toFixed(2)}</p>
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Cost / wear</span>
+                      <p className="text-[12px] mt-0.5 text-black">{item.currency} {(item.purchasePrice / item.wearCount).toFixed(2)}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Sparkline */}
                 {history.length >= 2 && (
-                  <div className="border-t border-border/40 pt-4">
+                  <div className="border-t border-[#EDEDED] pt-4">
                     <PriceSparkline history={history} />
                   </div>
                 )}
 
                 {/* Log price inline */}
                 {logPriceOpen && (
-                  <div className="border border-border/60 rounded-sm p-3 space-y-3 bg-muted/30">
-                    <p className="text-xs tracking-widest uppercase text-muted-foreground">Log current price</p>
+                  <div className="border border-[#DEDEDE] p-3 space-y-3 bg-[#F5F5F5]">
+                    <p className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Log current price</p>
                     <div className="flex gap-2">
                       <Input
                         type="number"
                         placeholder="Current price"
                         value={newPrice}
                         onChange={(e) => setNewPrice(e.target.value)}
-                        className="text-sm"
+                        className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-8"
                       />
                       <Input
                         placeholder="Note (optional)"
                         value={priceNote}
                         onChange={(e) => setPriceNote(e.target.value)}
-                        className="text-sm"
+                        className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-8"
                       />
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
+                      <button
                         onClick={() => {
                           if (!newPrice) return;
-                          addPrice.mutate({
-                            itemId: item.id,
-                            price: parseFloat(newPrice),
-                            currency: item.currency ?? "USD",
-                            note: priceNote || undefined,
-                          });
+                          addPrice.mutate({ itemId: item.id, price: parseFloat(newPrice), currency: item.currency ?? "USD", note: priceNote || undefined });
                         }}
                         disabled={addPrice.isPending || !newPrice}
-                        className="text-xs tracking-wide gap-1.5"
+                        className="flex items-center gap-1.5 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-3 py-1.5 hover:bg-[#323232] transition-colors disabled:opacity-40"
                       >
-                        {addPrice.isPending && <Loader2 size={11} className="animate-spin" />}
-                        Save price
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                        {addPrice.isPending && <Loader2 size={10} className="animate-spin" />}
+                        Save
+                      </button>
+                      <button
                         onClick={() => setLogPriceOpen(false)}
-                        className="text-xs"
+                        className="text-[10px] tracking-wider uppercase text-[#5A5A5A] hover:text-black transition-colors px-2"
                       >
                         Cancel
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 )}
 
                 {/* Note */}
                 {item.personalNote && (
-                  <div className="border-t border-border/40 pt-4">
-                    <p className="text-xs tracking-widest uppercase text-muted-foreground mb-1">Note</p>
-                    <p className="font-serif italic text-sm leading-relaxed text-foreground/80">
+                  <div className="border-t border-[#EDEDED] pt-4">
+                    <p className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] mb-2">Note</p>
+                    <p className="text-[12px] leading-relaxed text-[#323232] italic">
                       {item.personalNote}
                     </p>
                   </div>
@@ -381,84 +367,32 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                 )}
 
                 {/* Action buttons */}
-                <div className="border-t border-border/40 pt-4 grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => markWorn.mutate({ id: item.id })}
-                    disabled={markWorn.isPending}
-                    className="text-xs gap-1.5 tracking-wide"
-                  >
-                    {markWorn.isPending ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <CheckCircle2 size={12} />
-                    )}
-                    Mark worn
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setLogPriceOpen(!logPriceOpen)}
-                    className="text-xs gap-1.5 tracking-wide"
-                  >
-                    <RefreshCw size={12} />
-                    Log price
-                  </Button>
-                  {/* Share */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleShare}
-                    className="text-xs gap-1.5 tracking-wide"
-                  >
-                    <Share2 size={12} />
-                    Share
-                  </Button>
-                  {/* Add to wishlist */}
-                  <Button
-                    variant={item.inCart ? "default" : "outline"}
-                    size="sm"
-                    onClick={() =>
-                      item.inCart
-                        ? removeFromCart.mutate({ itemId: item.id })
-                        : addToCart.mutate({ itemId: item.id })
-                    }
-                    disabled={addToCart.isPending || removeFromCart.isPending}
-                    className="text-xs gap-1.5 tracking-wide"
-                  >
-                    <ShoppingBag size={12} fill={item.inCart ? "currentColor" : "none"} />
-                    {item.inCart ? "In wishlist" : "Add to wishlist"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditOpen(true)}
-                    className="text-xs gap-1.5 tracking-wide"
-                  >
-                    <Edit2 size={12} />
-                    Edit
-                  </Button>
-                  {item.buyUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(item.buyUrl ?? undefined, "_blank")}
-                      className="text-xs gap-1.5 tracking-wide"
+                <div className="border-t border-[#EDEDED] pt-4 grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Mark worn", icon: <CheckCircle2 size={11} />, onClick: () => markWorn.mutate({ id: item.id }), disabled: markWorn.isPending },
+                    { label: "Log price", icon: <RefreshCw size={11} />, onClick: () => setLogPriceOpen(!logPriceOpen), disabled: false },
+                    { label: "Share", icon: <Share2 size={11} />, onClick: handleShare, disabled: false },
+                    { label: item.inCart ? "In wishlist" : "Wishlist", icon: <ShoppingBag size={11} fill={item.inCart ? "currentColor" : "none"} />, onClick: () => item.inCart ? removeFromCart.mutate({ itemId: item.id }) : addToCart.mutate({ itemId: item.id }), disabled: addToCart.isPending || removeFromCart.isPending, filled: item.inCart },
+                    { label: "Edit", icon: <Edit2 size={11} />, onClick: () => setEditOpen(true), disabled: false },
+                    ...(item.buyUrl ? [{ label: "Shop", icon: <ExternalLink size={11} />, onClick: () => window.open(item.buyUrl ?? undefined, "_blank"), disabled: false }] : []),
+                  ].map(({ label, icon, onClick, disabled, filled }: any) => (
+                    <button
+                      key={label}
+                      onClick={onClick}
+                      disabled={disabled}
+                      className={`flex items-center justify-center gap-1.5 text-[10px] tracking-[0.12em] uppercase py-2.5 border transition-colors disabled:opacity-40 ${
+                        filled ? "bg-black text-white border-black" : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+                      }`}
                     >
-                      <ExternalLink size={12} />
-                      Buy
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
+                      {icon}{label}
+                    </button>
+                  ))}
+                  <button
                     onClick={() => setDeleteOpen(true)}
-                    className="text-xs gap-1.5 tracking-wide text-destructive hover:text-destructive col-span-2"
+                    className="col-span-2 flex items-center justify-center gap-1.5 text-[10px] tracking-[0.12em] uppercase py-2.5 border border-[#DEDEDE] text-[#ACABAB] hover:border-black hover:text-black transition-colors"
                   >
-                    <Trash2 size={12} />
-                    Delete piece
-                  </Button>
+                    <Trash2 size={11} /> Delete piece
+                  </button>
                 </div>
               </div>
             </>
@@ -478,20 +412,20 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none border-[#DEDEDE]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif font-normal text-xl">
+            <AlertDialogTitle className="text-[11px] tracking-[0.18em] uppercase font-medium">
               Remove this piece?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-muted-foreground">
+            <AlertDialogDescription className="text-[12px] text-[#5A5A5A]">
               This will permanently remove <span className="font-medium text-foreground">{item?.title}</span> and all its price history from your wardrobe.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs tracking-wide">Keep it</AlertDialogCancel>
+            <AlertDialogCancel className="text-[10px] tracking-[0.14em] uppercase rounded-none border-[#DEDEDE] hover:border-black">Keep it</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteItem.mutate({ id: itemId })}
-              className="text-xs tracking-wide bg-destructive hover:bg-destructive/90"
+              className="text-[10px] tracking-[0.14em] uppercase rounded-none bg-black hover:bg-[#323232]"
             >
               Remove
             </AlertDialogAction>

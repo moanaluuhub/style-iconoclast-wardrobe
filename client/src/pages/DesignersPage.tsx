@@ -30,9 +30,9 @@ const TYPE_LABELS: Record<EntryType, string> = {
 };
 
 const TYPE_COLORS: Record<EntryType, string> = {
-  designer: "bg-rose-50 text-rose-700 border-rose-200",
-  shop: "bg-sky-50 text-sky-700 border-sky-200",
-  brand: "bg-violet-50 text-violet-700 border-violet-200",
+  designer: "bg-[#F5F5F5] text-black border-[#DEDEDE]",
+  shop: "bg-[#F5F5F5] text-black border-[#DEDEDE]",
+  brand: "bg-[#F5F5F5] text-black border-[#DEDEDE]",
 };
 
 // ─── Add / Edit Modal ──────────────────────────────────────────────────────────
@@ -89,27 +89,27 @@ function AddEditModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="font-serif font-normal text-xl">
+      <DialogContent className="max-w-sm rounded-none border-[#DEDEDE] p-0">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-[#DEDEDE]">
+          <DialogTitle className="text-[11px] tracking-[0.18em] uppercase font-medium text-black">
             {initial ? "Edit entry" : "Add to index"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+        <form onSubmit={handleSubmit} className="space-y-4 p-5">
           <div className="space-y-1.5">
-            <label className="text-xs tracking-widest uppercase text-muted-foreground">Name *</label>
+            <label className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Name *</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. The Row, Dover Street Market"
-              className="text-sm"
+              className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
               autoFocus
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs tracking-widest uppercase text-muted-foreground">Type</label>
+            <label className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Type</label>
             <Select value={type} onValueChange={(v) => setType(v as EntryType)}>
-              <SelectTrigger className="text-sm">
+              <SelectTrigger className="text-[12px] rounded-none border-[#DEDEDE] focus:ring-0 h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -120,40 +120,40 @@ function AddEditModal({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs tracking-widest uppercase text-muted-foreground">Website</label>
+            <label className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Website</label>
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
               type="url"
-              className="text-sm"
+              className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs tracking-widest uppercase text-muted-foreground">Location</label>
+            <label className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Location</label>
             <Input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g. Paris, New York"
-              className="text-sm"
+              className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs tracking-widest uppercase text-muted-foreground">Notes</label>
+            <label className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Notes</label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Personal notes..."
-              className="text-sm"
+              className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
             />
           </div>
           <div className="flex gap-2 pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} className="flex-1 text-xs tracking-wide">
+            <button type="button" onClick={onClose} className="flex-1 text-[10px] tracking-[0.14em] uppercase py-2.5 border border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black transition-colors">
               Cancel
-            </Button>
-            <Button type="submit" size="sm" disabled={isPending} className="flex-1 text-xs tracking-widest uppercase">
+            </button>
+            <button type="submit" disabled={isPending} className="flex-1 text-[10px] tracking-[0.14em] uppercase py-2.5 bg-black text-white hover:bg-[#323232] transition-colors disabled:opacity-40">
               {initial ? "Save" : "Add"}
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>
@@ -182,13 +182,13 @@ function EntryCard({
     .toUpperCase();
 
   return (
-    <div className="group border border-border/40 rounded-sm bg-card hover:border-border transition-all duration-200 p-4 flex items-start gap-4">
+    <div className="group border border-[#EDEDED] hover:border-black transition-all duration-200 p-4 flex items-start gap-4">
       {/* Avatar / Logo */}
-      <div className="w-12 h-12 rounded-sm bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center">
+      <div className="w-12 h-12 bg-[#F5F5F5] flex-shrink-0 overflow-hidden flex items-center justify-center">
         {entry.logoUrl ? (
           <img src={entry.logoUrl} alt={entry.name} className="w-full h-full object-cover" />
         ) : (
-          <span className="font-serif text-lg text-muted-foreground/50">{initials}</span>
+          <span className="text-[13px] font-medium text-[#ACABAB] tracking-wider">{initials}</span>
         )}
       </div>
 
@@ -197,20 +197,20 @@ function EntryCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-serif text-base leading-tight truncate">{entry.name}</h3>
+              <h3 className="text-[13px] font-medium text-black leading-tight truncate">{entry.name}</h3>
               <span
-                className={`text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded-sm border ${
-                  TYPE_COLORS[entry.type as EntryType] ?? "bg-muted text-muted-foreground border-border"
+                className={`text-[8px] tracking-[0.14em] uppercase px-1.5 py-0.5 border ${
+                  TYPE_COLORS[entry.type as EntryType] ?? "bg-[#F5F5F5] text-black border-[#DEDEDE]"
                 }`}
               >
                 {TYPE_LABELS[entry.type as EntryType] ?? entry.type}
               </span>
             </div>
             {entry.location && (
-              <p className="text-xs text-muted-foreground mt-0.5">{entry.location}</p>
+              <p className="text-[11px] text-[#5A5A5A] mt-0.5">{entry.location}</p>
             )}
             {entry.notes && (
-              <p className="text-xs text-muted-foreground/70 mt-1 italic font-serif line-clamp-2">
+              <p className="text-[11px] text-[#ACABAB] mt-1 italic line-clamp-2">
                 {entry.notes}
               </p>
             )}
@@ -220,40 +220,36 @@ function EntryCard({
           <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={onToggleFavorite}
-              className={`p-1.5 rounded-sm transition-colors ${
-                entry.isFavorite
-                  ? "text-rose-500"
-                  : "text-muted-foreground hover:text-rose-400"
-              }`}
+              className="p-1.5 transition-colors text-black"
               title={entry.isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
-              <Heart size={14} fill={entry.isFavorite ? "currentColor" : "none"} />
+              <Heart size={13} fill={entry.isFavorite ? "currentColor" : "none"} />
             </button>
             {entry.url && (
               <a
                 href={entry.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="p-1.5 text-[#5A5A5A] hover:text-black transition-colors"
                 onClick={(e) => e.stopPropagation()}
                 title="Visit website"
               >
-                <ExternalLink size={14} />
+                <ExternalLink size={13} />
               </a>
             )}
             <button
               onClick={onEdit}
-              className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 text-[#5A5A5A] hover:text-black transition-colors"
               title="Edit"
             >
-              <Pencil size={13} />
+              <Pencil size={12} />
             </button>
             <button
               onClick={onDelete}
-              className="p-1.5 rounded-sm text-muted-foreground hover:text-destructive transition-colors"
+              className="p-1.5 text-[#ACABAB] hover:text-black transition-colors"
               title="Delete"
             >
-              <Trash2 size={13} />
+              <Trash2 size={12} />
             </button>
           </div>
         </div>
@@ -331,13 +327,13 @@ export default function DesignersPage() {
   if (!isAuthenticated) {
     return (
       <div className="container py-24 text-center">
-        <p className="font-serif text-2xl text-muted-foreground/60">Sign in to manage your index</p>
-        <Button
+        <p className="text-[13px] text-[#ACABAB] tracking-wide">Sign in to manage your index</p>
+        <button
           onClick={() => (window.location.href = getLoginUrl())}
-          className="mt-6 text-xs tracking-widest uppercase"
+          className="mt-6 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-8 py-3 hover:bg-[#323232] transition-colors"
         >
           Sign in
-        </Button>
+        </button>
       </div>
     );
   }
@@ -347,92 +343,90 @@ export default function DesignersPage() {
   return (
     <div className="container py-8">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-8 border-b border-[#EDEDED] pb-6">
         <div>
-          <h1 className="font-serif text-4xl">Designers & Shops</h1>
-          <p className="text-xs text-muted-foreground mt-1 tracking-wide">
+          <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Designers & Shops</h1>
+          <p className="text-[12px] text-[#ACABAB] mt-1 tracking-wide">
             Your personal index of favourite houses and boutiques
           </p>
         </div>
-        <Button
+        <button
           onClick={() => setAddOpen(true)}
-          size="sm"
-          className="gap-1.5 text-xs tracking-widest uppercase"
+          className="flex items-center gap-1.5 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-4 py-2 hover:bg-[#323232] transition-colors"
         >
-          <Plus size={13} />
+          <Plus size={12} />
           Add
-        </Button>
+        </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         {/* Search */}
         <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ACABAB]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search..."
-            className="pl-8 h-8 text-xs"
+            className="pl-8 h-9 text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black"
           />
         </div>
 
         {/* Type filter */}
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="h-8 text-xs w-[120px]">
+          <SelectTrigger className="h-9 text-[12px] w-[120px] rounded-none border-[#DEDEDE] focus:ring-0">
             <SelectValue placeholder="All types" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-xs">All types</SelectItem>
-            <SelectItem value="designer" className="text-xs">Designers</SelectItem>
-            <SelectItem value="shop" className="text-xs">Shops</SelectItem>
-            <SelectItem value="brand" className="text-xs">Brands</SelectItem>
+          <SelectContent className="rounded-none border-[#DEDEDE]">
+            <SelectItem value="all" className="text-[12px]">All types</SelectItem>
+            <SelectItem value="designer" className="text-[12px]">Designers</SelectItem>
+            <SelectItem value="shop" className="text-[12px]">Shops</SelectItem>
+            <SelectItem value="brand" className="text-[12px]">Brands</SelectItem>
           </SelectContent>
         </Select>
 
         {/* Favorites toggle */}
         <button
           onClick={() => setFavoritesOnly((f) => !f)}
-          className={`flex items-center gap-1.5 h-8 px-3 rounded-sm border text-xs transition-all ${
+          className={`flex items-center gap-1.5 h-9 px-3 border text-[10px] tracking-[0.12em] uppercase transition-all ${
             favoritesOnly
-              ? "border-rose-300 bg-rose-50 text-rose-700"
-              : "border-border text-muted-foreground hover:border-rose-300 hover:text-rose-500"
+              ? "border-black bg-black text-white"
+              : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
           }`}
         >
-          <Heart size={12} fill={favoritesOnly ? "currentColor" : "none"} />
+          <Heart size={11} fill={favoritesOnly ? "currentColor" : "none"} />
           Favourites
           {favoriteCount > 0 && (
-            <span className="ml-0.5 text-[10px] font-medium">{favoriteCount}</span>
+            <span className="ml-0.5 text-[10px]">{favoriteCount}</span>
           )}
         </button>
       </div>
 
       {/* Entries grid */}
       {isLoading ? (
-        <div className="space-y-3">
+          <div className="space-y-px">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-sm bg-muted animate-pulse" />
+            <div key={i} className="h-20 bg-[#F5F5F5] animate-pulse" />
           ))}
         </div>
       ) : entries.length === 0 ? (
         <div className="text-center py-24">
-          <p className="font-serif text-3xl text-muted-foreground/60 mb-3">
+          <p className="text-[13px] text-[#ACABAB] tracking-wide mb-2">
             {favoritesOnly ? "No favourites yet" : "Your index is empty"}
           </p>
-          <p className="text-sm text-muted-foreground mb-6 italic font-serif">
+          <p className="text-[11px] text-[#DEDEDE] mb-6">
             {favoritesOnly
               ? "Heart a designer or shop to add them here"
               : "Start building your personal index of houses and boutiques"}
           </p>
           {!favoritesOnly && (
-            <Button
+            <button
               onClick={() => setAddOpen(true)}
-              variant="outline"
-              className="text-xs tracking-widest uppercase gap-1.5"
+              className="text-[10px] tracking-[0.14em] uppercase px-6 py-2.5 border border-black text-black hover:bg-black hover:text-white transition-colors gap-1.5 inline-flex items-center"
             >
-              <Plus size={13} />
+              <Plus size={12} />
               Add first entry
-            </Button>
+            </button>
           )}
         </div>
       ) : (
@@ -441,8 +435,8 @@ export default function DesignersPage() {
           {!favoritesOnly && (entries as any[]).some((e) => e.isFavorite) && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <Star size={12} className="text-amber-500" fill="currentColor" />
-                <span className="text-[10px] tracking-widest uppercase text-muted-foreground">
+                <Heart size={11} className="text-black" fill="currentColor" />
+                <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">
                   Favourites
                 </span>
               </div>
@@ -463,7 +457,7 @@ export default function DesignersPage() {
               </div>
               {(entries as any[]).some((e) => !e.isFavorite) && (
                 <div className="mt-6 mb-3 flex items-center gap-2">
-                  <span className="text-[10px] tracking-widest uppercase text-muted-foreground">
+                  <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">
                     All
                   </span>
                 </div>

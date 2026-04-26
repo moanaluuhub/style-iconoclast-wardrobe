@@ -21,7 +21,7 @@ const SLOT_ICONS: Record<string, LucideIcon> = {
 };
 function SlotIcon({ name, size = 14 }: { name: string; size?: number }) {
   const Icon = SLOT_ICONS[name] ?? PlusCircle;
-  return <Icon size={size} className="text-muted-foreground/60" />;
+  return <Icon size={size} className="text-[#ACABAB]" />;
 }
 import { getLoginUrl } from "@/const";
 import ItemDetailModal from "@/components/ItemDetailModal";
@@ -53,27 +53,27 @@ function SlotPickerModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm max-h-[70vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-serif font-normal text-xl">
+      <DialogContent className="max-w-sm max-h-[70vh] overflow-y-auto rounded-none border-[#DEDEDE] p-0">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-[#DEDEDE]">
+          <DialogTitle className="text-[11px] tracking-[0.18em] uppercase font-medium text-black">
             Choose {slotConfig?.label}
           </DialogTitle>
         </DialogHeader>
         {filtered.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground italic font-serif">
+          <div className="text-center py-8 px-5">
+            <p className="text-[12px] text-[#ACABAB] tracking-wide">
               No items in this category yet
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-3 p-5">
             {filtered.map((item: any) => (
               <button
                 key={item.id}
                 onClick={() => { onSelect(item); onClose(); }}
-                className="group rounded-sm overflow-hidden border border-border/40 hover:border-primary/40 transition-all duration-150 text-left"
+                className="group overflow-hidden border border-[#DEDEDE] hover:border-black transition-all duration-150 text-left"
               >
-                <div className="aspect-square bg-muted overflow-hidden">
+                <div className="aspect-square bg-[#F5F5F5] overflow-hidden">
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
@@ -81,8 +81,8 @@ function SlotPickerModal({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-muted to-accent/30 flex items-center justify-center">
-                      <span className="font-serif text-2xl text-muted-foreground/30">
+                    <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                      <span className="text-2xl font-light text-[#DEDEDE]">
                         {item.title?.[0]}
                       </span>
                     </div>
@@ -90,11 +90,11 @@ function SlotPickerModal({
                 </div>
                 <div className="p-2">
                   {item.brand && (
-                    <p className="text-[9px] tracking-widest uppercase text-muted-foreground">
+                    <p className="text-[9px] tracking-[0.14em] uppercase text-black font-medium">
                       {item.brand}
                     </p>
                   )}
-                  <p className="text-xs font-serif leading-snug line-clamp-2">{item.title}</p>
+                  <p className="text-[11px] leading-snug line-clamp-2 text-[#323232]">{item.title}</p>
                 </div>
               </button>
             ))}
@@ -128,12 +128,14 @@ function SlotCard({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="flex items-center justify-center gap-1 text-[10px] tracking-widest uppercase text-muted-foreground text-center">
-        {iconName && <SlotIcon name={iconName} size={11} />}
+      <span className="flex items-center justify-center gap-1 text-[9px] tracking-[0.14em] uppercase text-[#ACABAB] text-center mb-1">
+        {iconName && <SlotIcon name={iconName} size={10} />}
         {label}
       </span>
       <div
-        className={`slot-card ${item ? "filled" : ""}`}
+        className={`relative aspect-[3/4] border overflow-hidden cursor-pointer transition-all ${
+          item ? "border-[#DEDEDE]" : "border-dashed border-[#DEDEDE] bg-[#F9F9F9] hover:border-black"
+        }`}
         onClick={!item ? onAdd : undefined}
       >
         {item ? (
@@ -147,10 +149,10 @@ function SlotCard({
               />
             ) : (
               <div
-                className="w-full h-full bg-gradient-to-br from-muted to-accent/30 flex items-center justify-center cursor-pointer"
+                className="w-full h-full bg-[#F5F5F5] flex items-center justify-center cursor-pointer"
                 onClick={() => onViewItem(item.id)}
               >
-                <span className="font-serif text-3xl text-muted-foreground/30">
+                <span className="text-3xl font-light text-[#DEDEDE]">
                   {item.title?.[0]}
                 </span>
               </div>
@@ -159,35 +161,33 @@ function SlotCard({
             <div className="absolute top-1.5 right-1.5 flex gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); onSwap(); }}
-                className="bg-background/80 backdrop-blur-sm rounded-full p-1 hover:bg-background transition-colors"
+                className="bg-white/90 p-1 hover:bg-white transition-colors"
               >
-                <RefreshCw size={11} className="text-muted-foreground" />
+                <RefreshCw size={10} className="text-black" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onClear(); }}
-                className="bg-background/80 backdrop-blur-sm rounded-full p-1 hover:bg-background transition-colors"
+                className="bg-white/90 p-1 hover:bg-white transition-colors"
               >
-                <X size={11} className="text-muted-foreground" />
+                <X size={10} className="text-black" />
               </button>
             </div>
             {/* Item name overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 to-transparent p-2">
-              <p className="text-[10px] text-white/90 font-serif leading-tight line-clamp-1">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2">
+              <p className="text-[9px] text-white leading-tight line-clamp-1 tracking-wide">
                 {item.title}
               </p>
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="w-6 h-6 rounded-full border border-dashed border-muted-foreground/40 flex items-center justify-center">
-              <span className="text-muted-foreground/40 text-lg leading-none">+</span>
-            </div>
-            <span className="text-[10px] text-muted-foreground/60 tracking-wider">Add</span>
+          <div className="flex flex-col items-center justify-center h-full gap-1.5">
+            <span className="text-[#DEDEDE] text-2xl leading-none">+</span>
+            <span className="text-[9px] text-[#ACABAB] tracking-[0.12em] uppercase">Add</span>
           </div>
         )}
       </div>
       {item && (
-        <p className="text-[10px] text-center text-muted-foreground line-clamp-1 font-serif">
+        <p className="text-[9px] text-center text-[#5A5A5A] line-clamp-1 mt-1">
           {item.brand ? `${item.brand} · ` : ""}{item.title}
         </p>
       )}
@@ -245,13 +245,13 @@ export default function CanvasPage() {
   if (!isAuthenticated) {
     return (
       <div className="container py-24 text-center">
-        <p className="font-serif text-2xl text-muted-foreground/60">Sign in to build outfits</p>
-        <Button
+        <p className="text-[13px] text-[#ACABAB] tracking-wide">Sign in to build outfits</p>
+        <button
           onClick={() => (window.location.href = getLoginUrl())}
-          className="mt-6 text-xs tracking-widest uppercase"
+          className="mt-6 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-8 py-3 hover:bg-[#323232] transition-colors"
         >
           Sign in
-        </Button>
+        </button>
       </div>
     );
   }
@@ -281,9 +281,9 @@ export default function CanvasPage() {
   return (
     <div className="container py-8 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-serif text-4xl">Canvas</h1>
-        <p className="text-xs text-muted-foreground mt-1 tracking-wide">
+      <div className="mb-8 border-b border-[#EDEDED] pb-6">
+        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Canvas</h1>
+        <p className="text-[12px] text-[#ACABAB] mt-1 tracking-wide">
           Compose an outfit from your wardrobe
         </p>
       </div>
@@ -366,7 +366,7 @@ export default function CanvasPage() {
                   {/* Remove optional slot button */}
                   <button
                     onClick={() => removeOptionalSlot(slot)}
-                    className="absolute -top-2 -right-2 z-10 bg-background border border-border rounded-full w-5 h-5 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                    className="absolute -top-2 -right-2 z-10 bg-white border border-[#DEDEDE] w-5 h-5 flex items-center justify-center hover:border-black transition-colors"
                     title={`Remove ${config.label} slot`}
                   >
                     <X size={10} />
@@ -380,16 +380,16 @@ export default function CanvasPage() {
         {/* Add optional slot buttons */}
         {optionalSlots.some((s) => !activeOptional.includes(s.slot)) && (
           <div className="flex flex-wrap gap-2 pt-2">
-            <span className="text-[10px] tracking-widest uppercase text-muted-foreground self-center mr-1">Add slot:</span>
+            <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB] self-center mr-1">Add slot:</span>
             {optionalSlots
               .filter((s) => !activeOptional.includes(s.slot))
               .map((s) => (
                 <button
                   key={s.slot}
                   onClick={() => addOptionalSlot(s.slot)}
-                  className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-sm border border-dashed border-border hover:border-primary/60 hover:bg-accent text-muted-foreground hover:text-foreground transition-all"
+                  className="flex items-center gap-1 text-[10px] px-2.5 py-1 border border-dashed border-[#DEDEDE] hover:border-black text-[#5A5A5A] hover:text-black transition-all tracking-wide"
                 >
-                  <SlotIcon name={s.icon} size={11} />
+                  <SlotIcon name={s.icon} size={10} />
                   <span>{s.label}</span>
                 </button>
               ))}
@@ -398,14 +398,14 @@ export default function CanvasPage() {
       </div>
 
       {/* Divider */}
-      <div className="w-full h-px bg-border/60 my-8" />
+      <div className="w-full h-px bg-[#EDEDED] my-8" />
 
       {/* Save outfit */}
       <div className="space-y-4">
         {totalPrice > 0 && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground text-xs tracking-widest uppercase">Total value</span>
-            <span className="font-serif text-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] tracking-[0.14em] uppercase text-[#ACABAB]">Total value</span>
+            <span className="text-[14px] font-medium text-black">
               USD {totalPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </div>
@@ -415,24 +415,24 @@ export default function CanvasPage() {
             placeholder="Name this outfit..."
             value={outfitName}
             onChange={(e) => setOutfitName(e.target.value)}
-            className="text-sm font-serif italic"
+            className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-10"
             onKeyDown={(e) => e.key === "Enter" && handleSave()}
           />
-          <Button
+          <button
             onClick={handleSave}
             disabled={saveOutfit.isPending}
-            className="gap-1.5 text-xs tracking-widest uppercase whitespace-nowrap"
+            className="flex items-center gap-1.5 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-5 h-10 whitespace-nowrap hover:bg-[#323232] transition-colors disabled:opacity-40"
           >
             {saveOutfit.isPending ? (
-              <Loader2 size={13} className="animate-spin" />
+              <Loader2 size={12} className="animate-spin" />
             ) : (
-              <Save size={13} />
+              <Save size={12} />
             )}
             Save outfit
-          </Button>
+          </button>
         </div>
         {filledSlots.length > 0 && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[10px] text-[#ACABAB] tracking-wide">
             {filledSlots.length} {filledSlots.length === 1 ? "piece" : "pieces"} selected
           </p>
         )}

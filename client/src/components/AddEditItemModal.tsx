@@ -228,18 +228,18 @@ export default function AddEditItemModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-serif text-2xl font-normal">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-none border-[#DEDEDE] p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#DEDEDE]">
+          <DialogTitle className="text-[11px] tracking-[0.18em] uppercase font-medium text-black">
             {isEdit ? "Edit piece" : step === 1 ? "Add a piece" : "Item details"}
           </DialogTitle>
         </DialogHeader>
 
         {/* Step 1 — URL */}
         {step === 1 && (
-          <div className="space-y-6 pt-2">
+          <div className="space-y-6 px-6 py-6">
             <div className="space-y-2">
-              <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+              <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                 Paste a product link
               </Label>
               <div className="flex gap-2">
@@ -249,21 +249,20 @@ export default function AddEditItemModal({
                     placeholder="https://..."
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className="pl-8 text-sm"
+                    className="pl-8 text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
                     onKeyDown={(e) => e.key === "Enter" && handlePullDetails()}
                   />
                 </div>
-                <Button
+                <button
                   onClick={handlePullDetails}
                   disabled={urlLoading || !urlInput.trim()}
-                  size="sm"
-                  className="gap-1.5 text-xs tracking-wide whitespace-nowrap"
+                  className="flex items-center gap-1.5 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-4 h-9 whitespace-nowrap hover:bg-[#323232] transition-colors disabled:opacity-40"
                 >
                   {urlLoading ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />}
                   {urlLoading ? "Extracting..." : "Extract"}
-                </Button>
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-[#ACABAB] tracking-wide">
                 Paste a product URL — title, brand, price, image and color will be extracted automatically.
               </p>
             </div>
@@ -274,26 +273,25 @@ export default function AddEditItemModal({
               <div className="flex-1 h-px bg-border" />
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full text-xs tracking-widest uppercase"
+            <button
+              className="w-full border border-[#DEDEDE] text-[10px] tracking-[0.14em] uppercase py-2.5 text-[#5A5A5A] hover:border-black hover:text-black transition-colors"
               onClick={() => setStep(2)}
             >
               Add manually
-            </Button>
+            </button>
           </div>
         )}
 
         {/* Step 2 — Form */}
         {step === 2 && (
-          <div className="space-y-5 pt-2">
+          <div className="space-y-5 px-6 py-6">
             {/* Image */}
             <div className="space-y-2">
-              <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+              <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                 Image
               </Label>
               {imagePreview ? (
-                <div className="relative w-full aspect-[4/5] rounded-sm overflow-hidden bg-muted">
+                <div className="relative w-full aspect-[4/5] overflow-hidden bg-[#F5F5F5]">
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   <button
                     onClick={() => {
@@ -301,7 +299,7 @@ export default function AddEditItemModal({
                       setImageFile(null);
                       setForm((f) => ({ ...f, imageUrl: "" }));
                     }}
-                    className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-background transition-colors"
+                    className="absolute top-2 right-2 bg-white/90 p-1 hover:bg-white transition-colors"
                   >
                     <X size={14} />
                   </button>
@@ -309,10 +307,10 @@ export default function AddEditItemModal({
               ) : (
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="w-full aspect-[4/5] rounded-sm border-2 border-dashed border-border/60 bg-muted/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/40 hover:bg-muted/50 transition-all"
+                  className="w-full aspect-[4/5] border-2 border-dashed border-[#DEDEDE] bg-[#F5F5F5] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-black transition-all"
                 >
                   <Upload size={20} className="text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Upload image</span>
+                  <span className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">Upload image</span>
                 </div>
               )}
               <input
@@ -331,7 +329,7 @@ export default function AddEditItemModal({
                       setForm((f) => ({ ...f, imageUrl: e.target.value }));
                       setImagePreview(e.target.value);
                     }}
-                    className="text-sm"
+                    className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
                   />
                 </div>
               )}
@@ -340,25 +338,25 @@ export default function AddEditItemModal({
             {/* Title & Brand */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
-                  Title <span className="text-destructive">*</span>
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
+                  Title <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                   placeholder="e.g. Cashmere Coat"
-                  className="text-sm"
+                  className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                   Brand
                 </Label>
                 <Input
                   value={form.brand}
                   onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
                   placeholder="e.g. Loro Piana"
-                  className="text-sm"
+                  className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
                 />
               </div>
             </div>
@@ -366,14 +364,14 @@ export default function AddEditItemModal({
             {/* Category & Color */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                   Category
                 </Label>
                 <Select
                   value={form.category}
                   onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
                 >
-                  <SelectTrigger className="text-sm">
+                  <SelectTrigger className="text-[11px] rounded-none border-[#DEDEDE] focus:ring-0 h-9">  
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -386,14 +384,14 @@ export default function AddEditItemModal({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                   Color
                 </Label>
                 <Select
                   value={form.color}
                   onValueChange={(v) => setForm((f) => ({ ...f, color: v }))}
                 >
-                  <SelectTrigger className="text-sm">
+                  <SelectTrigger className="text-[11px] rounded-none border-[#DEDEDE] focus:ring-0 h-9">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -410,18 +408,18 @@ export default function AddEditItemModal({
             {/* Size & Price */}
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                   Size
                 </Label>
                 <Input
                   value={form.size}
                   onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
                   placeholder="e.g. M, 38"
-                  className="text-sm"
+                  className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                   Price
                 </Label>
                 <Input
@@ -429,18 +427,18 @@ export default function AddEditItemModal({
                   value={form.purchasePrice}
                   onChange={(e) => setForm((f) => ({ ...f, purchasePrice: e.target.value }))}
                   placeholder="0.00"
-                  className="text-sm"
+                  className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                   Currency
                 </Label>
                 <Select
                   value={form.currency}
                   onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}
                 >
-                  <SelectTrigger className="text-sm">
+                  <SelectTrigger className="text-[11px] rounded-none border-[#DEDEDE] focus:ring-0 h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -456,47 +454,47 @@ export default function AddEditItemModal({
 
             {/* Purchase Date */}
             <div className="space-y-1.5">
-              <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                 Purchase Date
               </Label>
               <Input
                 type="date"
                 value={form.purchaseDate}
                 onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))}
-                className="text-sm"
+                className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
               />
             </div>
 
             {/* Buy URL */}
             <div className="space-y-1.5">
-              <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                 Product URL
               </Label>
               <Input
                 value={form.buyUrl}
                 onChange={(e) => setForm((f) => ({ ...f, buyUrl: e.target.value }))}
                 placeholder="https://..."
-                className="text-sm"
+                className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
               />
             </div>
 
             {/* Note */}
             <div className="space-y-1.5">
-              <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                 Personal Note
               </Label>
               <Textarea
                 value={form.personalNote}
                 onChange={(e) => setForm((f) => ({ ...f, personalNote: e.target.value }))}
                 placeholder="Your thoughts on this piece..."
-                className="text-sm font-serif italic resize-none"
+                className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black resize-none"
                 rows={3}
               />
             </div>
 
             {/* Tags */}
             <div className="space-y-2">
-              <Label className="text-xs tracking-widest uppercase text-muted-foreground">
+                <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
                 Tags
               </Label>
               <div className="flex flex-wrap gap-1.5">
@@ -512,16 +510,16 @@ export default function AddEditItemModal({
                 ))}
               </div>
               <div className="flex gap-2">
-                <Input
+                  <Input
                   value={customTag}
                   onChange={(e) => setCustomTag(e.target.value)}
                   placeholder="Add custom tag..."
-                  className="text-sm"
+                  className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-8"
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomTag())}
                 />
-                <Button variant="outline" size="sm" onClick={addCustomTag} className="text-xs">
+                <button onClick={addCustomTag} className="border border-[#DEDEDE] text-[10px] tracking-wider uppercase px-3 h-8 text-[#5A5A5A] hover:border-black hover:text-black transition-colors">
                   Add
-                </Button>
+                </button>
               </div>
               {form.tags.filter((t) => !SUGGESTED_TAGS.includes(t)).length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -546,33 +544,32 @@ export default function AddEditItemModal({
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, isLoved: !f.isLoved }))}
-              className={`flex items-center gap-2 text-sm transition-colors ${
-                form.isLoved ? "text-rose-500" : "text-muted-foreground hover:text-foreground"
+              className={`flex items-center gap-2 transition-colors ${
+                form.isLoved ? "text-black" : "text-[#ACABAB] hover:text-black"
               }`}
             >
-              <Heart size={16} fill={form.isLoved ? "currentColor" : "none"} />
-              <span className="text-xs tracking-wide">
+              <Heart size={15} fill={form.isLoved ? "currentColor" : "none"} />
+              <span className="text-[10px] tracking-[0.14em] uppercase">
                 {form.isLoved ? "Loved piece" : "Love this piece"}
               </span>
             </button>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
+            <div className="flex gap-3 pt-2 border-t border-[#DEDEDE] mt-2 pb-2">
+              <button
                 onClick={handleClose}
-                className="flex-1 text-xs tracking-widest uppercase"
+                className="flex-1 border border-[#DEDEDE] text-[10px] tracking-[0.14em] uppercase py-3 text-[#5A5A5A] hover:border-black hover:text-black transition-colors"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 text-xs tracking-widest uppercase gap-2"
+                className="flex-1 bg-black text-white text-[10px] tracking-[0.14em] uppercase py-3 hover:bg-[#323232] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
               >
-                {isSaving && <Loader2 size={13} className="animate-spin" />}
+                {isSaving && <Loader2 size={12} className="animate-spin" />}
                 {isEdit ? "Save changes" : "Add to wardrobe"}
-              </Button>
+              </button>
             </div>
           </div>
         )}

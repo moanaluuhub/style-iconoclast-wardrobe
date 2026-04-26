@@ -112,6 +112,18 @@
 - [x] Designers & Shops: search by name
 
 ## Enhancement Round 4
-- [ ] Wardrobe: edit button on item cards (pencil icon in hover overlay, opens AddEditItemModal pre-filled)
-- [ ] Canvas: replace colored slot icons with neutral stone/muted icons
-- [ ] Outfits: edit mode on saved outfits (swap/clear individual slots, rename, save)
+- [x] Wardrobe: edit button on item cards (pencil icon in hover overlay, opens AddEditItemModal pre-filled)
+- [x] Canvas: replace colored slot icons with neutral stone/muted icons
+- [x] Outfits: edit mode on saved outfits (swap/clear individual slots, rename, save)
+
+## Enhancement Round 5 — Net-a-Porter Redesign
+- [ ] Global CSS: pure black/white/grey palette, Inter font, remove grain texture, remove cream/ivory
+- [ ] AppShell: black top bar, white caps nav links, clean search icon, black wishlist/cart badge
+- [ ] WardrobePage: NAP-style product cards (white bg, black text, minimal border, brand in caps above title)
+- [ ] Add/Edit modal: clean black/white form, black CTA buttons
+- [ ] Item Detail modal: NAP product page style (large image left, details right)
+- [ ] Canvas page: black/white slot UI, clean typography
+- [ ] Outfits page: clean black/white list, editorial spacing
+- [ ] Stats page: clean charts, black/white/grey data viz
+- [ ] Designers page: clean index style
+- [ ] LoginPage: NAP-style centered login

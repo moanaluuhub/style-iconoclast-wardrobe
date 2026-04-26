@@ -2,23 +2,23 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Shirt, Layers, BookOpen, BarChart2, LogOut, LogIn, ShoppingCart, Heart } from "lucide-react";
+import { ShoppingBag, Search, User } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import CartPanel from "./CartPanel";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Wardrobe", icon: Shirt },
-  { href: "/canvas", label: "Canvas", icon: Layers },
-  { href: "/outfits", label: "Outfits", icon: BookOpen },
-  { href: "/designers", label: "Designers", icon: Heart },
-  { href: "/stats", label: "Statistics", icon: BarChart2 },
+  { href: "/", label: "Wardrobe" },
+  { href: "/canvas", label: "Canvas" },
+  { href: "/outfits", label: "Outfits" },
+  { href: "/designers", label: "Designers" },
+  { href: "/stats", label: "Statistics" },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const [location] = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -26,121 +26,147 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const cartCount = (cartEntries as any[]).length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-sm">
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* ── Top bar: wordmark + utility icons ─────────────────────────────── */}
+      <div className="border-b border-[#DEDEDE]">
         <div className="container">
-          <div className="flex items-center justify-between h-16">
-            {/* Wordmark */}
+          <div className="flex items-center justify-between h-14">
+            {/* Left: hamburger (mobile) */}
+            <div className="flex items-center gap-3 w-1/3">
+              <button
+                className="md:hidden flex flex-col gap-[5px] p-1"
+                onClick={() => setMobileMenuOpen((v) => !v)}
+                aria-label="Menu"
+              >
+                <span className="block w-5 h-px bg-black" />
+                <span className="block w-5 h-px bg-black" />
+                <span className="block w-5 h-px bg-black" />
+              </button>
+            </div>
+
+            {/* Center: wordmark */}
             <Link href="/">
-              <span className="font-serif text-2xl tracking-tight text-foreground cursor-pointer select-none">
-                The Wardrobe
+              <span
+                className="text-[17px] font-light tracking-[0.22em] uppercase text-black cursor-pointer select-none"
+                style={{ letterSpacing: "0.22em" }}
+              >
+                THE WARDROBE
               </span>
             </Link>
 
-            {/* Nav Links */}
-            {isAuthenticated && (
-              <nav className="hidden md:flex items-center gap-1">
-                {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                  const isActive = location === href;
-                  return (
-                    <Link key={href} href={href}>
-                      <button
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm transition-all duration-150 ${
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                        }`}
-                      >
-                        <Icon size={14} />
-                        <span className="tracking-wide">{label}</span>
-                      </button>
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
-
-            {/* Right side: cart + auth */}
-            <div className="flex items-center gap-2">
-              {/* Wishlist cart button */}
-              {isAuthenticated && (
-                <button
-                  onClick={() => setCartOpen(true)}
-                  className="relative p-2 rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                  title="Wishlist"
-                >
-                  <ShoppingCart size={16} />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium leading-none">
-                      {cartCount > 9 ? "9+" : cartCount}
-                    </span>
-                  )}
-                </button>
-              )}
-
+            {/* Right: utility icons */}
+            <div className="flex items-center justify-end gap-4 w-1/3">
               {isAuthenticated ? (
                 <>
-                  <span className="hidden sm:block text-xs text-muted-foreground tracking-wider uppercase">
-                    {user?.name ?? ""}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={logout}
-                    className="text-muted-foreground hover:text-foreground gap-1.5"
+                  <button
+                    onClick={() => setCartOpen(true)}
+                    className="relative flex items-center gap-1 text-black hover:opacity-60 transition-opacity"
+                    title="Wishlist"
                   >
-                    <LogOut size={14} />
-                    <span className="hidden sm:inline text-xs tracking-wide">Sign out</span>
-                  </Button>
+                    <ShoppingBag size={18} strokeWidth={1.5} />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[9px] w-4 h-4 flex items-center justify-center font-medium leading-none">
+                        {cartCount > 9 ? "9+" : cartCount}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="hidden sm:flex items-center gap-1.5 text-black hover:opacity-60 transition-opacity"
+                    title="Sign out"
+                  >
+                    <User size={18} strokeWidth={1.5} />
+                    <span className="text-[10px] tracking-[0.14em] uppercase font-medium">
+                      {user?.name?.split(" ")[0] ?? "Account"}
+                    </span>
+                  </button>
                 </>
               ) : (
-                <Button
-                  size="sm"
+                <button
                   onClick={() => (window.location.href = getLoginUrl())}
-                  className="gap-1.5 text-xs tracking-wide"
+                  className="flex items-center gap-1.5 text-black hover:opacity-60 transition-opacity"
                 >
-                  <LogIn size={14} />
-                  Sign in
-                </Button>
+                  <User size={18} strokeWidth={1.5} />
+                  <span className="text-[10px] tracking-[0.14em] uppercase font-medium">Sign in</span>
+                </button>
               )}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Mobile nav */}
-          {isAuthenticated && (
-            <nav className="flex md:hidden items-center gap-1 pb-2 overflow-x-auto">
-              {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {/* ── Black navigation bar ───────────────────────────────────────────── */}
+      {isAuthenticated && (
+        <nav className="hidden md:block bg-black">
+          <div className="container">
+            <div className="flex items-center justify-center gap-0">
+              {NAV_ITEMS.map(({ href, label }) => {
                 const isActive = location === href;
                 return (
                   <Link key={href} href={href}>
                     <button
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs whitespace-nowrap transition-all duration-150 ${
+                      className={`px-5 py-3 text-[11px] tracking-[0.16em] uppercase font-medium transition-colors duration-150 ${
                         isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                          ? "text-white border-b-2 border-white"
+                          : "text-[#ACABAB] hover:text-white"
                       }`}
                     >
-                      <Icon size={12} />
                       {label}
                     </button>
                   </Link>
                 );
               })}
-            </nav>
-          )}
-        </div>
-      </header>
+            </div>
+          </div>
+        </nav>
+      )}
 
-      {/* Main content */}
+      {/* ── Mobile nav drawer ─────────────────────────────────────────────── */}
+      {mobileMenuOpen && isAuthenticated && (
+        <div className="md:hidden bg-black">
+          {NAV_ITEMS.map(({ href, label }) => {
+            const isActive = location === href;
+            return (
+              <Link key={href} href={href}>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block w-full text-left px-6 py-4 text-[11px] tracking-[0.16em] uppercase font-medium border-b border-white/10 ${
+                    isActive ? "text-white" : "text-[#ACABAB] hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Main content ──────────────────────────────────────────────────── */}
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-6 mt-12">
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-[#DEDEDE] py-8 mt-16">
         <div className="container">
-          <p className="text-xs text-muted-foreground/60 tracking-widest uppercase text-center font-serif italic">
-            The Wardrobe — Your private fashion archive
-          </p>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <span
+              className="text-[11px] tracking-[0.22em] uppercase text-black font-light"
+              style={{ letterSpacing: "0.22em" }}
+            >
+              THE WARDROBE
+            </span>
+            <p className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">
+              Your private fashion archive
+            </p>
+            {isAuthenticated && (
+              <button
+                onClick={logout}
+                className="text-[10px] tracking-[0.12em] uppercase text-[#5A5A5A] hover:text-black transition-colors"
+              >
+                Sign out
+              </button>
+            )}
+          </div>
         </div>
       </footer>
 

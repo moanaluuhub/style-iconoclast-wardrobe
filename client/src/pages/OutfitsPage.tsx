@@ -49,26 +49,27 @@ function SlotPickerModal({
   );
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-serif font-normal text-xl">
+      <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto rounded-none border-[#DEDEDE] p-0">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-[#DEDEDE]">
+          <DialogTitle className="text-[11px] tracking-[0.18em] uppercase font-medium text-black">
             Choose {slotConfig?.label}
           </DialogTitle>
         </DialogHeader>
+        <div className="px-5 pt-4 pb-2">
         <Input
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="text-sm"
-        />
+          className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
+        /></div>
         {filtered.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground italic font-serif">
+            <p className="text-[12px] text-[#ACABAB] tracking-wide">
               No items found for this slot
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-px mt-4 px-5 pb-5">
             {filtered.map((item: any) => (
               <button
                 key={item.id}
@@ -76,9 +77,9 @@ function SlotPickerModal({
                   onSelect(item);
                   onClose();
                 }}
-                className="group rounded-sm overflow-hidden border border-border/40 hover:border-primary/40 transition-all duration-150 text-left"
+                className="group overflow-hidden border border-[#EDEDED] hover:border-black transition-all duration-150 text-left"
               >
-                <div className="aspect-square bg-muted overflow-hidden">
+                <div className="aspect-square bg-[#F5F5F5] overflow-hidden">
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
@@ -86,8 +87,8 @@ function SlotPickerModal({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-muted to-accent/30 flex items-center justify-center">
-                      <span className="font-serif text-2xl text-muted-foreground/30">
+                    <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                      <span className="text-xl text-[#DEDEDE]">
                         {item.title?.[0]}
                       </span>
                     </div>
@@ -95,11 +96,11 @@ function SlotPickerModal({
                 </div>
                 <div className="p-2">
                   {item.brand && (
-                    <p className="text-[9px] tracking-widest uppercase text-muted-foreground">
+                    <p className="text-[9px] tracking-[0.14em] uppercase text-black font-medium">
                       {item.brand}
                     </p>
                   )}
-                  <p className="text-xs font-serif leading-snug line-clamp-2">{item.title}</p>
+                  <p className="text-[11px] text-[#323232] leading-snug line-clamp-2">{item.title}</p>
                 </div>
               </button>
             ))}
@@ -403,7 +404,7 @@ function OutfitDetailModal({
                   onItemClick(item.id);
                   onClose();
                 }}
-                className="group rounded-sm overflow-hidden border border-border/40 hover:border-primary/40 transition-all duration-150 text-left"
+                className="group overflow-hidden border border-[#EDEDED] hover:border-black transition-all duration-150 text-left"
               >
                 <div className="aspect-square bg-muted overflow-hidden relative">
                   {item.imageUrl ? (
@@ -527,18 +528,18 @@ function OutfitCard({
 
   return (
     <div
-      className="border border-border/40 rounded-sm bg-card hover:border-border transition-all duration-200 overflow-hidden cursor-pointer group"
+      className="border border-[#EDEDED] hover:border-black transition-all duration-200 overflow-hidden cursor-pointer group"
       onClick={onView}
     >
       {/* Thumbnail strip */}
-      <div className="flex gap-px bg-border/20">
+      <div className="flex gap-px bg-[#EDEDED]">
         {allSlots.map((slotConfig) => {
           const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
           if (!slotItem && slotConfig.optional) return null;
           return (
             <div
               key={slotConfig.slot}
-              className="flex-1 aspect-square bg-muted overflow-hidden"
+              className="flex-1 aspect-square bg-[#F5F5F5] overflow-hidden"
               style={{ minWidth: 0 }}
             >
               {slotItem?.item?.imageUrl ? (
@@ -548,13 +549,13 @@ function OutfitCard({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-muted to-accent/20 flex items-center justify-center">
+                <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
                   {slotItem?.item ? (
-                    <span className="font-serif text-sm text-muted-foreground/30">
+                    <span className="text-sm text-[#DEDEDE]">
                       {slotItem.item.title?.[0]}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground/20 text-[10px]">
+                    <span className="text-[#DEDEDE] text-[10px]">
                       {slotConfig.label[0]}
                     </span>
                   )}
@@ -568,34 +569,32 @@ function OutfitCard({
       {/* Info row */}
       <div className="p-4 flex items-center justify-between">
         <div>
-          <h3 className="font-serif text-lg leading-tight">{outfit.name}</h3>
+          <h3 className="text-[13px] font-medium text-black leading-tight">{outfit.name}</h3>
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[10px] text-[#ACABAB] tracking-wide">
               {displayItems.length} {displayItems.length === 1 ? "piece" : "pieces"}
             </span>
             {outfit.totalPrice != null && outfit.totalPrice > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[10px] text-[#ACABAB] tracking-wide">
                 USD {outfit.totalPrice.toLocaleString()}
               </span>
             )}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[10px] text-[#ACABAB] tracking-wide">
               {new Date(outfit.createdAt).toLocaleDateString()}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={(e) => {
               e.stopPropagation();
               onView();
             }}
-            className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+            className="p-1.5 text-[#ACABAB] hover:text-black transition-colors"
             title="View outfit"
           >
-            <Eye size={14} />
-          </Button>
+            <Eye size={13} />
+          </button>
           <Button
             variant="ghost"
             size="sm"
@@ -662,13 +661,13 @@ export default function OutfitsPage() {
   if (!isAuthenticated) {
     return (
       <div className="container py-24 text-center">
-        <p className="font-serif text-2xl text-muted-foreground/60">Sign in to view outfits</p>
-        <Button
+        <p className="text-[13px] text-[#ACABAB] tracking-wide">Sign in to view outfits</p>
+        <button
           onClick={() => (window.location.href = getLoginUrl())}
-          className="mt-6 text-xs tracking-widest uppercase"
+          className="mt-6 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-8 py-3 hover:bg-[#323232] transition-colors"
         >
           Sign in
-        </Button>
+        </button>
       </div>
     );
   }
@@ -676,21 +675,19 @@ export default function OutfitsPage() {
   return (
     <div className="container py-8">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-8 border-b border-[#EDEDED] pb-6">
         <div>
-          <h1 className="font-serif text-4xl">Outfits</h1>
-          <p className="text-xs text-muted-foreground mt-1 tracking-wide">
+          <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Outfits</h1>
+          <p className="text-[12px] text-[#ACABAB] mt-1 tracking-wide">
             {outfits.length} saved {outfits.length === 1 ? "outfit" : "outfits"}
           </p>
         </div>
-        <Button
+        <button
           onClick={() => navigate("/canvas")}
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs tracking-widest uppercase"
+          className="flex items-center gap-1.5 border border-black text-black text-[10px] tracking-[0.14em] uppercase px-4 py-2 hover:bg-black hover:text-white transition-colors"
         >
-          <Layers size={13} /> New outfit
-        </Button>
+          <Layers size={12} /> New outfit
+        </button>
       </div>
 
       {isLoading ? (
@@ -701,17 +698,16 @@ export default function OutfitsPage() {
         </div>
       ) : outfits.length === 0 ? (
         <div className="text-center py-24">
-          <p className="font-serif text-3xl text-muted-foreground/60 mb-3">No outfits yet</p>
-          <p className="text-sm text-muted-foreground mb-6 italic font-serif">
+          <p className="text-[13px] text-[#ACABAB] tracking-wide mb-2">No outfits yet</p>
+          <p className="text-[11px] text-[#DEDEDE] mb-6">
             Compose your first look on the canvas
           </p>
-          <Button
+          <button
             onClick={() => navigate("/canvas")}
-            variant="outline"
-            className="text-xs tracking-widest uppercase gap-1.5"
+            className="text-[10px] tracking-[0.14em] uppercase px-6 py-2.5 border border-black text-black hover:bg-black hover:text-white transition-colors gap-1.5 inline-flex items-center"
           >
-            <Layers size={13} /> Open canvas
-          </Button>
+            <Layers size={12} /> Open canvas
+          </button>
         </div>
       ) : (
         <div className="space-y-4 max-w-2xl">
@@ -763,18 +759,18 @@ export default function OutfitsPage() {
       <AlertDialog open={deleteId != null} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif font-normal text-xl">
+            <AlertDialogTitle className="text-[13px] font-medium text-black">
               Remove this outfit?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-muted-foreground">
+            <AlertDialogDescription className="text-[12px] text-[#5A5A5A]">
               The individual items will remain in your wardrobe.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs tracking-wide">Keep it</AlertDialogCancel>
+            <AlertDialogCancel className="text-[10px] tracking-[0.14em] uppercase rounded-none border-[#DEDEDE] hover:border-black">Keep it</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteOutfit.mutate({ id: deleteId })}
-              className="text-xs tracking-wide bg-destructive hover:bg-destructive/90"
+              className="text-[10px] tracking-[0.14em] uppercase rounded-none bg-black hover:bg-[#323232]"
             >
               Remove
             </AlertDialogAction>
