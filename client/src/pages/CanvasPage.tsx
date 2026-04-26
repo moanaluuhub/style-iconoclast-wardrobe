@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -229,6 +229,28 @@ export default function CanvasPage() {
     setSlots((s) => ({ ...s, [slot]: null }));
   };
 
+  // Pre-fill from wardrobe multi-select
+  useEffect(() => {
+    const raw = sessionStorage.getItem("canvas_prefill");
+    if (!raw) return;
+    sessionStorage.removeItem("canvas_prefill");
+    try {
+      const items: any[] = JSON.parse(raw);
+      const newSlots: SlotState = { ...EMPTY_SLOTS };
+      const newOptional: OutfitSlot[] = [];
+      for (const item of items) {
+        const cat = item.category as string;
+        // Find the best matching slot for this item's category
+        const match = OUTFIT_SLOTS.find((s) => s.categories.includes(cat as any) && newSlots[s.slot] === null);
+        if (match) {
+          newSlots[match.slot] = item;
+          if (match.optional) newOptional.push(match.slot);
+        }
+      }
+      setSlots(newSlots);
+      if (newOptional.length > 0) setActiveOptional(newOptional);
+    } catch {}
+  }, []);
   const utils = trpc.useUtils();
   const saveOutfit = trpc.outfits.create.useMutation({
     onSuccess: () => {

@@ -6,12 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Plus, Search, Heart, TrendingUp, TrendingDown, Minus,
   SlidersHorizontal, X, Share2, ShoppingBag, GripVertical, Pencil,
+  CheckCircle2, Layers,
 } from "lucide-react";
 import AddEditItemModal from "@/components/AddEditItemModal";
 import ItemDetailModal from "@/components/ItemDetailModal";
 import CartPanel from "@/components/CartPanel";
 import { CATEGORIES, COLORS } from "@/lib/types";
 import { getLoginUrl } from "@/const";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -191,7 +193,7 @@ function ItemCard({
 
 // ─── Sortable wrapper ──────────────────────────────────────────────────────────
 function SortableItemCard({
-  item, onClick, onCartToggle, inCart, onLoveToggle, onEdit, dragMode,
+  item, onClick, onCartToggle, inCart, onLoveToggle, onEdit, dragMode, selectMode, isSelected, onToggleSelect,
 }: {
   item: any;
   onClick: () => void;
@@ -200,6 +202,9 @@ function SortableItemCard({
   onLoveToggle: (e: React.MouseEvent) => void;
   onEdit: (e: React.MouseEvent) => void;
   dragMode: boolean;
+  selectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : undefined };
@@ -213,6 +218,17 @@ function SortableItemCard({
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={13} className="text-[#5A5A5A]" />
+        </div>
+      )}
+      {selectMode && (
+        <div
+          className="absolute inset-0 z-20 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+        >
+          <div className={`absolute inset-0 transition-colors duration-150 ${isSelected ? "bg-black/20" : "bg-transparent hover:bg-black/5"}`} />
+          <div className={`absolute top-2.5 left-2.5 w-5 h-5 border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-black border-black" : "bg-white/90 border-[#ACABAB]"}`}>
+            {isSelected && <CheckCircle2 size={11} className="text-white" />}
+          </div>
         </div>
       )}
       <ItemCard
@@ -240,6 +256,9 @@ export default function WardrobePage() {
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [dragMode, setDragMode] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [, navigate] = useLocation();
   const [localOrder, setLocalOrder] = useState<any[]>([]);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
@@ -258,6 +277,20 @@ export default function WardrobePage() {
   const removeFromCart = trpc.cart.remove.useMutation({ onSuccess: () => { utils.cart.list.invalidate(); toast.success("Removed from wishlist"); }, onError: () => toast.error("Failed to remove") });
   const cartItemIds = new Set((cartEntries as any[]).map((c) => c.itemId));
   const cartCount = (cartEntries as any[]).length;
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
+  const buildOutfitFromSelection = () => {
+    const selected = (localOrder as any[]).filter((item) => selectedIds.has(item.id));
+    sessionStorage.setItem("canvas_prefill", JSON.stringify(selected));
+    setSelectMode(false);
+    setSelectedIds(new Set());
+    navigate("/canvas");
+  };
 
   const handleCartToggle = (e: React.MouseEvent, item: any) => {
     e.stopPropagation();
@@ -348,6 +381,13 @@ export default function WardrobePage() {
                 {cartCount > 9 ? "9+" : cartCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => { setSelectMode((s) => !s); setSelectedIds(new Set()); }}
+            className={`flex items-center gap-2 text-[10px] tracking-[0.14em] uppercase font-medium px-4 py-2 border transition-colors ${selectMode ? "bg-black text-white border-black" : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"}`}
+          >
+            <CheckCircle2 size={12} />
+            {selectMode ? "Cancel" : "Select"}
           </button>
           <button
             onClick={() => setAddOpen(true)}
@@ -489,12 +529,15 @@ export default function WardrobePage() {
                 <SortableItemCard
                   key={item.id}
                   item={item}
-                  onClick={() => setSelectedItemId(item.id)}
+                  onClick={() => !selectMode && setSelectedItemId(item.id)}
                   onCartToggle={(e) => handleCartToggle(e, item)}
                   inCart={cartItemIds.has(item.id)}
                   onLoveToggle={(e) => handleLoveToggle(e, item)}
                   onEdit={(e) => { e.stopPropagation(); setEditItem(item); }}
-                  dragMode={dragMode}
+                  dragMode={dragMode && !selectMode}
+                  selectMode={selectMode}
+                  isSelected={selectedIds.has(item.id)}
+                  onToggleSelect={() => toggleSelect(item.id)}
                 />
               ))}
             </div>
@@ -502,6 +545,28 @@ export default function WardrobePage() {
         </DndContext>
       )}
 
+      {/* Floating multi-select action bar */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-black text-white px-6 py-3.5 shadow-2xl">
+          <span className="text-[11px] tracking-[0.18em] uppercase font-medium">
+            {selectedIds.size} {selectedIds.size === 1 ? "piece" : "pieces"} selected
+          </span>
+          <div className="w-px h-4 bg-white/30" />
+          <button
+            onClick={buildOutfitFromSelection}
+            className="flex items-center gap-2 text-[10px] tracking-[0.14em] uppercase font-medium text-white hover:text-[#ACABAB] transition-colors"
+          >
+            <Layers size={13} />
+            Build outfit
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-[10px] tracking-[0.14em] uppercase text-white/60 hover:text-white transition-colors"
+          >
+            Clear
+          </button>
+        </div>
+      )}
       {/* Drag mode toggle */}
       {isAuthenticated && !isLoading && items.length > 0 && (
         <div className="mt-6 flex justify-end">

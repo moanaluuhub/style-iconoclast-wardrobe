@@ -132,3 +132,9 @@
 - [x] Wardrobe: tag filter chips row below search bar (all tags from user's items, one-click filter)
 - [x] Outfits: "Wore this today" button — increments wornCount on every item in the outfit
 - [x] Rename Statistics → My Archive (nav label, page heading, AppShell)
+
+## Enhancement Round 7 — Multi-select to outfit
+- [x] Wardrobe: "Select" mode toggle button in header
+- [x] Wardrobe: checkmark overlay on cards when in select mode
+- [x] Wardrobe: floating action bar showing count + "Build outfit" CTA when items are selected
+- [x] CanvasPage: accept pre-selected items via navigation state and auto-fill slots by category
