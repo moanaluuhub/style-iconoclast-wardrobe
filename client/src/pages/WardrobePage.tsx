@@ -4,11 +4,16 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Heart, TrendingUp, TrendingDown, Minus, SlidersHorizontal, X } from "lucide-react";
+import {
+  Plus, Search, Heart, TrendingUp, TrendingDown, Minus,
+  SlidersHorizontal, X, Share2, ShoppingBag, ShoppingCart,
+} from "lucide-react";
 import AddEditItemModal from "@/components/AddEditItemModal";
 import ItemDetailModal from "@/components/ItemDetailModal";
+import CartPanel from "@/components/CartPanel";
 import { CATEGORIES, COLORS } from "@/lib/types";
 import { getLoginUrl } from "@/const";
+import { toast } from "sonner";
 
 function TrendBadge({ item }: { item: any }) {
   const history = item.priceHistory ?? [];
@@ -37,14 +42,39 @@ function TrendBadge({ item }: { item: any }) {
   );
 }
 
-function ItemCard({ item, onClick }: { item: any; onClick: () => void }) {
+function ItemCard({
+  item,
+  onClick,
+  onCartToggle,
+  inCart,
+  onLoveToggle,
+}: {
+  item: any;
+  onClick: () => void;
+  onCartToggle: (e: React.MouseEvent) => void;
+  inCart: boolean;
+  onLoveToggle: (e: React.MouseEvent) => void;
+}) {
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `${item.brand ? item.brand + " — " : ""}${item.title}${item.currentPrice ? " · " + (item.currency ?? "USD") + " " + item.currentPrice.toLocaleString() : ""}`;
+    if (item.buyUrl) {
+      if (navigator.share) {
+        navigator.share({ title: item.title, text, url: item.buyUrl }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(item.buyUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } else {
+      navigator.clipboard.writeText(text);
+      toast.success("Details copied to clipboard");
+    }
+  };
+
   return (
-    <div
-      onClick={onClick}
-      className="masonry-item group cursor-pointer rounded-sm overflow-hidden border border-border/40 bg-card hover:border-border hover:shadow-sm transition-all duration-200"
-    >
+    <div className="masonry-item group cursor-pointer rounded-sm overflow-hidden border border-border/40 bg-card hover:border-border hover:shadow-sm transition-all duration-200">
       {/* Image */}
-      <div className="relative bg-muted overflow-hidden">
+      <div className="relative bg-muted overflow-hidden" onClick={onClick}>
         {item.imageUrl ? (
           <img
             src={item.imageUrl}
@@ -63,15 +93,56 @@ function ItemCard({ item, onClick }: { item: any; onClick: () => void }) {
             </span>
           </div>
         )}
-        {item.isLoved && (
-          <div className="absolute top-2 right-2">
-            <Heart size={14} fill="currentColor" className="text-rose-400" />
+
+          {/* Hover action bar */}
+        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2.5 py-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {/* Like toggle */}
+          <button
+            onClick={onLoveToggle}
+            className={`backdrop-blur-sm hover:bg-white/40 transition-colors rounded-full p-1.5 ${item.isLoved ? "bg-white/40" : "bg-white/20"}`}
+            title={item.isLoved ? "Remove from loved" : "Love this piece"}
+          >
+            <Heart
+              size={13}
+              fill={item.isLoved ? "currentColor" : "none"}
+              className={item.isLoved ? "text-rose-400" : "text-white"}
+            />
+          </button>
+          {/* Share + Cart */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleShare}
+              className="bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-colors rounded-full p-1.5"
+              title="Share"
+            >
+              <Share2 size={11} className="text-white" />
+            </button>
+            <button
+              onClick={onCartToggle}
+              className={`backdrop-blur-sm hover:bg-white/40 transition-colors rounded-full p-1.5 ${
+                inCart ? "bg-white/60" : "bg-white/20"
+              }`}
+              title={inCart ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <ShoppingBag
+                size={11}
+                className={inCart ? "text-foreground" : "text-white"}
+                fill={inCart ? "currentColor" : "none"}
+              />
+            </button>
           </div>
-        )}
+        </div>
+
+          {/* Loved indicator (always visible when not hovering) */}
+          {item.isLoved && (
+            <div className="absolute top-2 right-2 group-hover:opacity-0 transition-opacity pointer-events-none">
+              <Heart size={14} fill="currentColor" className="text-rose-400" />
+            </div>
+          )}
       </div>
 
       {/* Info */}
-      <div className="p-3 space-y-1">
+      <div className="p-3 space-y-1" onClick={onClick}>
         {item.brand && (
           <p className="text-[10px] tracking-widest uppercase text-muted-foreground font-medium">
             {item.brand}
@@ -116,6 +187,9 @@ export default function WardrobePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const utils = trpc.useUtils();
 
   const { data: items = [], isLoading, refetch } = trpc.items.list.useQuery(
     {
@@ -126,6 +200,79 @@ export default function WardrobePage() {
     },
     { enabled: isAuthenticated }
   );
+
+  const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const addToCart = trpc.cart.add.useMutation({
+    onSuccess: () => {
+      utils.cart.list.invalidate();
+      toast.success("Added to wishlist");
+    },
+    onError: () => toast.error("Failed to add"),
+  });
+
+  const removeFromCart = trpc.cart.remove.useMutation({
+    onSuccess: () => {
+      utils.cart.list.invalidate();
+      toast.success("Removed from wishlist");
+    },
+    onError: () => toast.error("Failed to remove"),
+  });
+
+  const cartItemIds = new Set((cartEntries as any[]).map((c) => c.itemId));
+  const cartCount = cartEntries.length;
+
+  const handleCartToggle = (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    if (cartItemIds.has(item.id)) {
+      removeFromCart.mutate({ itemId: item.id });
+    } else {
+      addToCart.mutate({ itemId: item.id });
+    }
+  };
+
+  const toggleLove = trpc.items.update.useMutation({
+    onMutate: async ({ id, isLoved }) => {
+      await utils.items.list.cancel();
+      const prev = utils.items.list.getData({
+        search: search || undefined,
+        category: category !== "all" ? category : undefined,
+        color: color !== "all" ? color : undefined,
+        sortBy,
+      });
+      utils.items.list.setData(
+        {
+          search: search || undefined,
+          category: category !== "all" ? category : undefined,
+          color: color !== "all" ? color : undefined,
+          sortBy,
+        },
+        (old) => (old ?? []).map((i: any) => (i.id === id ? { ...i, isLoved } : i))
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        utils.items.list.setData(
+          {
+            search: search || undefined,
+            category: category !== "all" ? category : undefined,
+            color: color !== "all" ? color : undefined,
+            sortBy,
+          },
+          ctx.prev
+        );
+      }
+    },
+    onSettled: () => utils.items.list.invalidate(),
+  });
+
+  const handleLoveToggle = (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    toggleLove.mutate({ id: item.id, isLoved: !item.isLoved });
+  };
 
   if (loading) {
     return (
@@ -166,14 +313,29 @@ export default function WardrobePage() {
             {items.length} {items.length === 1 ? "piece" : "pieces"}
           </p>
         </div>
-        <Button
-          onClick={() => setAddOpen(true)}
-          size="sm"
-          className="gap-1.5 text-xs tracking-widest uppercase"
-        >
-          <Plus size={13} />
-          Add piece
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Cart / Wishlist button */}
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative flex items-center gap-1.5 text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-sm border border-border/40 hover:border-border"
+          >
+            <ShoppingCart size={13} />
+            <span>Wishlist</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </button>
+          <Button
+            onClick={() => setAddOpen(true)}
+            size="sm"
+            className="gap-1.5 text-xs tracking-widest uppercase"
+          >
+            <Plus size={13} />
+            Add piece
+          </Button>
+        </div>
       </div>
 
       {/* Search & Sort bar */}
@@ -262,7 +424,11 @@ export default function WardrobePage() {
       {isLoading ? (
         <div className="masonry-grid">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="masonry-item rounded-sm bg-muted animate-pulse" style={{ height: `${200 + (i % 3) * 60}px` }} />
+            <div
+              key={i}
+              className="masonry-item rounded-sm bg-muted animate-pulse"
+              style={{ height: `${200 + (i % 3) * 60}px` }}
+            />
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -287,6 +453,9 @@ export default function WardrobePage() {
               key={item.id}
               item={item}
               onClick={() => setSelectedItemId(item.id)}
+              onCartToggle={(e) => handleCartToggle(e, item)}
+              inCart={cartItemIds.has(item.id)}
+              onLoveToggle={(e) => handleLoveToggle(e, item)}
             />
           ))}
         </div>
@@ -306,6 +475,9 @@ export default function WardrobePage() {
           onUpdate={() => refetch()}
         />
       )}
+
+      {/* Cart / Wishlist panel */}
+      <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
     </div>
   );
 }

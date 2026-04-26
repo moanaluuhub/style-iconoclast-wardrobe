@@ -84,3 +84,16 @@
 - [x] Vitest: outfits procedures
 - [x] Vitest: stats summary
 - [x] Final checkpoint
+
+## Enhancement Round 2
+- [x] LLM URL metadata extraction: scrape title, brand, price, image, color, description from pasted URL
+- [x] Like icon on item cards (toggle loved state)
+- [x] Share icon on item cards (copy link / Web Share API)
+- [x] Add-to-cart button on item cards and detail modal
+- [x] Cart DB table (cart_items: userId, itemId, addedAt)
+- [x] cart.list, cart.add, cart.remove tRPC procedures
+- [x] Cart panel / drawer UI with item list and total pricing
+- [x] Cart icon in nav with item count badge
+- [x] Remove from cart in panel
+- [x] Robust OG/meta tag extraction as primary parser, LLM as enrichment fallback
+- [x] Like toggle interaction on item cards (optimistic update)

@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
   Edit2, Trash2, Heart, ExternalLink, TrendingUp, TrendingDown,
-  Minus, RefreshCw, Loader2, X, ShoppingBag, CheckCircle2
+  Minus, RefreshCw, Loader2, X, ShoppingBag, CheckCircle2, Share2
 } from "lucide-react";
 import AddEditItemModal from "./AddEditItemModal";
 import {
@@ -137,6 +137,36 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
   const toggleLove = trpc.items.update.useMutation({
     onSuccess: () => { refetch(); onUpdate(); },
   });
+
+  const addToCart = trpc.cart.add.useMutation({
+    onSuccess: () => {
+      utils.cart.list.invalidate();
+      toast.success("Added to wishlist");
+    },
+  });
+
+  const removeFromCart = trpc.cart.remove.useMutation({
+    onSuccess: () => {
+      utils.cart.list.invalidate();
+      toast.success("Removed from wishlist");
+    },
+  });
+
+  const handleShare = () => {
+    if (!item) return;
+    const text = `${item.brand ? item.brand + " — " : ""}${item.title}${item.currentPrice ? " · " + (item.currency ?? "USD") + " " + item.currentPrice.toLocaleString() : ""}`;
+    if (item.buyUrl) {
+      if (navigator.share) {
+        navigator.share({ title: item.title, text, url: item.buyUrl }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(item.buyUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } else {
+      navigator.clipboard.writeText(text);
+      toast.success("Details copied to clipboard");
+    }
+  };
 
   if (!open) return null;
 
@@ -374,6 +404,31 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                   >
                     <RefreshCw size={12} />
                     Log price
+                  </Button>
+                  {/* Share */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShare}
+                    className="text-xs gap-1.5 tracking-wide"
+                  >
+                    <Share2 size={12} />
+                    Share
+                  </Button>
+                  {/* Add to wishlist */}
+                  <Button
+                    variant={item.inCart ? "default" : "outline"}
+                    size="sm"
+                    onClick={() =>
+                      item.inCart
+                        ? removeFromCart.mutate({ itemId: item.id })
+                        : addToCart.mutate({ itemId: item.id })
+                    }
+                    disabled={addToCart.isPending || removeFromCart.isPending}
+                    className="text-xs gap-1.5 tracking-wide"
+                  >
+                    <ShoppingBag size={12} fill={item.inCart ? "currentColor" : "none"} />
+                    {item.inCart ? "In wishlist" : "Add to wishlist"}
                   </Button>
                   <Button
                     variant="outline"

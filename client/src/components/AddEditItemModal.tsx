@@ -90,6 +90,7 @@ export default function AddEditItemModal({
   const createItem = trpc.items.create.useMutation();
   const updateItem = trpc.items.update.useMutation();
   const uploadImage = trpc.items.uploadImage.useMutation();
+  const extractFromUrl = trpc.items.extractFromUrl.useMutation();
 
   const handleClose = () => {
     setStep(isEdit ? 2 : 1);
@@ -104,12 +105,33 @@ export default function AddEditItemModal({
     if (!urlInput.trim()) return;
     setUrlLoading(true);
     try {
-      // Try to extract metadata from the URL using LLM-assisted parsing
-      // For MVP: pre-fill buyUrl and advance
-      setForm((f) => ({ ...f, buyUrl: urlInput }));
+      const result = await extractFromUrl.mutateAsync({ url: urlInput });
+      if (result.success && result.data) {
+        const d = result.data;
+        setForm((f) => ({
+          ...f,
+          buyUrl: urlInput,
+          title: d.title ?? f.title,
+          brand: d.brand ?? f.brand,
+          purchasePrice: d.price != null ? d.price.toString() : f.purchasePrice,
+          currency: d.currency ?? f.currency,
+          color: d.color ?? f.color,
+          category: d.category ?? f.category,
+          personalNote: d.description ? (f.personalNote || d.description) : f.personalNote,
+        }));
+        // Set image preview from extracted URL
+        if (d.imageUrl) {
+          setImagePreview(d.imageUrl);
+          setForm((f) => ({ ...f, imageUrl: d.imageUrl! }));
+        }
+        toast.success("Details extracted — review and save");
+      } else {
+        toast.info("Could not extract details — please fill in manually.");
+        setForm((f) => ({ ...f, buyUrl: urlInput }));
+      }
       setStep(2);
     } catch {
-      toast.error("Could not pull details — please fill in manually.");
+      toast.error("Extraction failed — please fill in manually.");
       setForm((f) => ({ ...f, buyUrl: urlInput }));
       setStep(2);
     } finally {
@@ -235,14 +257,14 @@ export default function AddEditItemModal({
                   onClick={handlePullDetails}
                   disabled={urlLoading || !urlInput.trim()}
                   size="sm"
-                  className="gap-1.5 text-xs tracking-wide"
+                  className="gap-1.5 text-xs tracking-wide whitespace-nowrap"
                 >
                   {urlLoading ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />}
-                  Pull
+                  {urlLoading ? "Extracting..." : "Extract"}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Paste a product URL to pre-fill details, or add manually below.
+                Paste a product URL — title, brand, price, image and color will be extracted automatically.
               </p>
             </div>
 

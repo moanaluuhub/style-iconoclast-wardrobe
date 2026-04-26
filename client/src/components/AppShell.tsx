@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shirt, Layers, BookOpen, BarChart2, LogOut, LogIn } from "lucide-react";
+import { Shirt, Layers, BookOpen, BarChart2, LogOut, LogIn, ShoppingCart } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import CartPanel from "./CartPanel";
 
 const NAV_ITEMS = [
   { href: "/", label: "Wardrobe", icon: Shirt },
@@ -14,6 +17,12 @@ const NAV_ITEMS = [
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const [location] = useLocation();
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const cartCount = (cartEntries as any[]).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -51,8 +60,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
             )}
 
-            {/* Auth */}
-            <div className="flex items-center gap-3">
+            {/* Right side: cart + auth */}
+            <div className="flex items-center gap-2">
+              {/* Wishlist cart button */}
+              {isAuthenticated && (
+                <button
+                  onClick={() => setCartOpen(true)}
+                  className="relative p-2 rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  title="Wishlist"
+                >
+                  <ShoppingCart size={16} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium leading-none">
+                      {cartCount > 9 ? "9+" : cartCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {isAuthenticated ? (
                 <>
                   <span className="hidden sm:block text-xs text-muted-foreground tracking-wider uppercase">
@@ -117,6 +142,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
       </footer>
+
+      {/* Global cart panel */}
+      <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
     </div>
   );
 }

@@ -118,3 +118,15 @@ export const outfitItems = mysqlTable("outfit_items", {
 
 export type OutfitItem = typeof outfitItems.$inferSelect;
 export type InsertOutfitItem = typeof outfitItems.$inferInsert;
+
+// ─── Cart Items ────────────────────────────────────────────────────────────────
+
+export const cartItems = mysqlTable("cart_items", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  itemId: int("itemId").notNull(),
+  addedAt: timestamp("addedAt").defaultNow().notNull(),
+});
+
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = typeof cartItems.$inferInsert;

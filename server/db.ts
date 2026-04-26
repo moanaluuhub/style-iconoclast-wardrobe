@@ -13,6 +13,7 @@ import {
   priceHistory,
   users,
   wardrobeItems,
+  cartItems,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -302,6 +303,57 @@ export async function deleteOutfit(id: number, userId: number) {
   await db
     .delete(outfits)
     .where(and(eq(outfits.id, id), eq(outfits.userId, userId)));
+}
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+
+export async function getCartItems(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: cartItems.id,
+      userId: cartItems.userId,
+      itemId: cartItems.itemId,
+      addedAt: cartItems.addedAt,
+      item: wardrobeItems,
+    })
+    .from(cartItems)
+    .leftJoin(wardrobeItems, eq(cartItems.itemId, wardrobeItems.id))
+    .where(eq(cartItems.userId, userId))
+    .orderBy(desc(cartItems.addedAt));
+}
+
+export async function addToCart(userId: number, itemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // avoid duplicates
+  const existing = await db
+    .select()
+    .from(cartItems)
+    .where(and(eq(cartItems.userId, userId), eq(cartItems.itemId, itemId)))
+    .limit(1);
+  if (existing.length > 0) return;
+  await db.insert(cartItems).values({ userId, itemId });
+}
+
+export async function removeFromCart(userId: number, itemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .delete(cartItems)
+    .where(and(eq(cartItems.userId, userId), eq(cartItems.itemId, itemId)));
+}
+
+export async function isInCart(userId: number, itemId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db
+    .select()
+    .from(cartItems)
+    .where(and(eq(cartItems.userId, userId), eq(cartItems.itemId, itemId)))
+    .limit(1);
+  return result.length > 0;
 }
 
 // ─── Statistics ────────────────────────────────────────────────────────────────

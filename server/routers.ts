@@ -4,6 +4,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { invokeLLM } from "./_core/llm";
 import {
   getItems,
   getItemById,
@@ -21,6 +22,10 @@ import {
   createOutfit,
   deleteOutfit,
   getStats,
+  getCartItems,
+  addToCart,
+  removeFromCart,
+  isInCart,
 } from "./db";
 import { storagePut } from "./storage";
 
@@ -39,7 +44,6 @@ const itemsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const items = await getItems(ctx.user.id, input);
-      // attach tags to each item
       const withTags = await Promise.all(
         items.map(async (item) => {
           const tags = await getTagsForItem(item.id);
@@ -56,7 +60,8 @@ const itemsRouter = router({
       if (!item) throw new TRPCError({ code: "NOT_FOUND" });
       const tags = await getTagsForItem(item.id);
       const history = await getPriceHistory(item.id, ctx.user.id);
-      return { ...item, tags: tags.map((t) => t.label), priceHistory: history };
+      const inCart = await isInCart(ctx.user.id, item.id);
+      return { ...item, tags: tags.map((t) => t.label), priceHistory: history, inCart };
     }),
 
   create: protectedProcedure
@@ -94,7 +99,6 @@ const itemsRouter = router({
       if (tags && tags.length > 0) {
         await setTagsForItem(insertId, ctx.user.id, tags);
       }
-      // log initial price point
       if (rest.purchasePrice) {
         await addPricePoint({
           itemId: insertId,
@@ -169,6 +173,170 @@ const itemsRouter = router({
       const { url } = await storagePut(key, buffer, input.contentType);
       return { url, key };
     }),
+
+  // ── LLM-powered URL metadata extraction ──────────────────────────────────────
+  extractFromUrl: protectedProcedure
+    .input(z.object({ url: z.string().url() }))
+    .mutation(async ({ input }) => {
+      try {
+        let html = "";
+        try {
+          const response = await fetch(input.url, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              Accept: "text/html,application/xhtml+xml",
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+          html = await response.text();
+        } catch {
+          html = "";
+        }
+
+        // ── Step 1: deterministic OG / meta tag extraction ──────────────────────
+        const getMeta = (name: string): string | null => {
+          // og:X
+          const og = html.match(
+            new RegExp(`<meta[^>]+property=["']og:${name}["'][^>]+content=["']([^"']+)["']`, "i")
+          ) ||
+          html.match(
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:${name}["']`, "i")
+          );
+          if (og?.[1]) return og[1].trim();
+          // name=
+          const nm = html.match(
+            new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, "i")
+          ) ||
+          html.match(
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${name}["']`, "i")
+          );
+          return nm?.[1]?.trim() ?? null;
+        };
+
+        const ogTitle = getMeta("title");
+        const ogImage = getMeta("image");
+        const ogDescription = getMeta("description") ?? getMeta("description");
+        const ogSiteName = getMeta("site_name");
+        // Try to find price in common meta patterns
+        const priceMatch =
+          html.match(/"price"\s*:\s*"([\d.,]+)"/i) ||
+          html.match(/content=["']([\d.]+)["'][^>]+property=["']product:price:amount["']/i) ||
+          html.match(/property=["']product:price:amount["'][^>]+content=["']([\d.]+)["']/i) ||
+          html.match(/itemprop=["']price["'][^>]+content=["']([\d.]+)["']/i) ||
+          html.match(/data-price=["']([\d.]+)["']/i);
+        const currencyMatch =
+          html.match(/"priceCurrency"\s*:\s*"([A-Z]{3})"/i) ||
+          html.match(/property=["']product:price:currency["'][^>]+content=["']([A-Z]{3})["']/i) ||
+          html.match(/itemprop=["']priceCurrency["'][^>]+content=["']([A-Z]{3})["']/i);
+        const ogPrice = priceMatch?.[1] ? parseFloat(priceMatch[1].replace(",", "")) : null;
+        const ogCurrency = currencyMatch?.[1] ?? null;
+
+        // ── Step 2: LLM enrichment for brand, color, category ───────────────────
+        // Build a compact text snippet for the LLM (title + description + first 2000 chars of visible text)
+        const visibleText = html
+          .replace(/<script[\s\S]*?<\/script>/gi, "")
+          .replace(/<style[\s\S]*?<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s{2,}/g, " ")
+          .slice(0, 3000);
+
+        const llmPromptContext = [
+          ogTitle ? `Title: ${ogTitle}` : "",
+          ogDescription ? `Description: ${ogDescription}` : "",
+          ogSiteName ? `Site: ${ogSiteName}` : "",
+          `URL: ${input.url}`,
+          `Page text excerpt: ${visibleText}`,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+        let llmData: {
+          title: string | null;
+          brand: string | null;
+          price: number | null;
+          currency: string | null;
+          color: string | null;
+          category: string | null;
+          imageUrl: string | null;
+          description: string | null;
+          size: string | null;
+        } = {
+          title: ogTitle,
+          brand: ogSiteName,
+          price: ogPrice,
+          currency: ogCurrency,
+          color: null,
+          category: null,
+          imageUrl: ogImage,
+          description: ogDescription,
+          size: null,
+        };
+
+        try {
+          const llmResponse = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a fashion product data extractor. Extract structured product information from the provided context. Return ONLY valid JSON, no markdown.",
+              },
+              {
+                role: "user",
+                content: `Extract product details from this fashion/clothing product page.\n\n${llmPromptContext}\n\nReturn JSON with these exact keys (use null for missing values):\n{\n  "title": "clean product name without brand prefix",\n  "brand": "brand name only",\n  "price": 0.00,\n  "currency": "USD",\n  "color": "main color name",\n  "category": "one of: tops|bottoms|outerwear|shoes|accessories|bags|dresses|suits|activewear|other",\n  "imageUrl": "best product image URL if identifiable",\n  "description": "brief product description max 100 chars",\n  "size": null\n}`,
+              },
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "product_metadata",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    title: { type: ["string", "null"] },
+                    brand: { type: ["string", "null"] },
+                    price: { type: ["number", "null"] },
+                    currency: { type: ["string", "null"] },
+                    color: { type: ["string", "null"] },
+                    category: { type: ["string", "null"] },
+                    imageUrl: { type: ["string", "null"] },
+                    description: { type: ["string", "null"] },
+                    size: { type: ["string", "null"] },
+                  },
+                  required: ["title", "brand", "price", "currency", "color", "category", "imageUrl", "description", "size"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const content = llmResponse.choices?.[0]?.message?.content;
+          if (content) {
+            const parsed = typeof content === "string" ? JSON.parse(content) : content;
+            // Merge: prefer OG values for title/image/price, use LLM for brand/color/category
+            llmData = {
+              title: ogTitle ?? parsed.title ?? null,
+              brand: parsed.brand ?? ogSiteName ?? null,
+              price: ogPrice ?? (typeof parsed.price === "number" ? parsed.price : null),
+              currency: ogCurrency ?? parsed.currency ?? "USD",
+              color: parsed.color ?? null,
+              category: parsed.category ?? null,
+              imageUrl: ogImage ?? parsed.imageUrl ?? null,
+              description: ogDescription ?? parsed.description ?? null,
+              size: parsed.size ?? null,
+            };
+          }
+        } catch (llmErr) {
+          console.warn("[extractFromUrl] LLM enrichment failed, using OG data only:", llmErr);
+          // llmData already has OG values, continue
+        }
+
+        return { success: true, data: llmData };
+      } catch (err) {
+        console.error("[extractFromUrl] Error:", err);
+        return { success: false, data: null };
+      }
+    }),
 });
 
 // ─── Price History Router ──────────────────────────────────────────────────────
@@ -239,11 +407,7 @@ const outfitsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const id = await createOutfit(
-        {
-          userId: ctx.user.id,
-          name: input.name,
-          totalPrice: input.totalPrice,
-        },
+        { userId: ctx.user.id, name: input.name, totalPrice: input.totalPrice },
         input.slots
       );
       return { id };
@@ -254,6 +418,35 @@ const outfitsRouter = router({
     .mutation(async ({ ctx, input }) => {
       await deleteOutfit(input.id, ctx.user.id);
       return { success: true };
+    }),
+});
+
+// ─── Cart Router ───────────────────────────────────────────────────────────────
+
+const cartRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return getCartItems(ctx.user.id);
+  }),
+
+  add: protectedProcedure
+    .input(z.object({ itemId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await addToCart(ctx.user.id, input.itemId);
+      return { success: true };
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ itemId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await removeFromCart(ctx.user.id, input.itemId);
+      return { success: true };
+    }),
+
+  check: protectedProcedure
+    .input(z.object({ itemId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const inCart = await isInCart(ctx.user.id, input.itemId);
+      return { inCart };
     }),
 });
 
@@ -280,6 +473,7 @@ export const appRouter = router({
   items: itemsRouter,
   priceHistory: priceHistoryRouter,
   outfits: outfitsRouter,
+  cart: cartRouter,
   stats: statsRouter,
 });
 
