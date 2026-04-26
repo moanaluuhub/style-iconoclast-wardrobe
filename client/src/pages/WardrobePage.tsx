@@ -28,10 +28,11 @@ import { CSS } from "@dnd-kit/utilities";
 // ─── Trend Badge ───────────────────────────────────────────────────────────────
 function TrendBadge({ item }: { item: any }) {
   const history = item.priceHistory ?? [];
-  if (history.length < 2) return null;
-  const first = history[0].price;
-  const last = history[history.length - 1].price;
-  const pct = ((last - first) / first) * 100;
+  const latestPrice = history.length > 0 ? history[history.length - 1].price : null;
+  // Compare vs purchase price first; fall back to first logged price
+  const basePrice = item.purchasePrice ?? (history.length >= 2 ? history[0].price : null);
+  if (latestPrice == null || basePrice == null) return null;
+  const pct = ((latestPrice - basePrice) / basePrice) * 100;
   if (Math.abs(pct) < 0.5) {
     return (
       <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-[#F5F5F5] text-[#5A5A5A] tracking-wider">
@@ -41,13 +42,13 @@ function TrendBadge({ item }: { item: any }) {
   }
   if (pct > 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-[#F5F5F5] text-black tracking-wider">
+      <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 tracking-wider font-medium">
         <TrendingUp size={8} /> +{pct.toFixed(0)}%
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-[#F5F5F5] text-[#5A5A5A] tracking-wider">
+    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-red-50 text-red-600 tracking-wider font-medium">
       <TrendingDown size={8} /> {pct.toFixed(0)}%
     </span>
   );

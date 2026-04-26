@@ -10,6 +10,7 @@ import {
   Minus, RefreshCw, Loader2, X, ShoppingBag, CheckCircle2, Share2
 } from "lucide-react";
 import AddEditItemModal from "./AddEditItemModal";
+import PriceTracker from "./PriceTracker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,9 +98,6 @@ interface ItemDetailModalProps {
 export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: ItemDetailModalProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [logPriceOpen, setLogPriceOpen] = useState(false);
-  const [newPrice, setNewPrice] = useState("");
-  const [priceNote, setPriceNote] = useState("");
 
   const utils = trpc.useUtils();
   const { data: item, isLoading, refetch } = trpc.items.get.useQuery(
@@ -124,15 +122,6 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
     },
   });
 
-  const addPrice = trpc.priceHistory.add.useMutation({
-    onSuccess: () => {
-      toast.success("Price logged");
-      refetch();
-      setLogPriceOpen(false);
-      setNewPrice("");
-      setPriceNote("");
-    },
-  });
 
   const toggleLove = trpc.items.update.useMutation({
     onSuccess: () => { refetch(); onUpdate(); },
@@ -184,15 +173,16 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 rounded-none border-[#DEDEDE]">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 rounded-none border-[#DEDEDE]">
           {isLoading || !item ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="animate-spin text-muted-foreground" size={24} />
             </div>
           ) : (
             <>
+              <div className="md:flex md:items-start">
               {/* Image */}
-              <div className="relative bg-[#F5F5F5] overflow-hidden" style={{ aspectRatio: "4/5" }}>
+              <div className="relative bg-[#F5F5F5] overflow-hidden md:w-[280px] md:shrink-0" style={{ aspectRatio: "4/5" }}>
                 {item.imageUrl ? (
                   <img
                     src={item.imageUrl}
@@ -227,7 +217,7 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
               </div>
 
               {/* Content */}
-              <div className="p-5 space-y-5">
+              <div className="p-5 space-y-5 flex-1 overflow-y-auto">
                 {/* Header */}
                 <div>
                   {item.brand && (
@@ -296,54 +286,15 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                     </div>
                   )}
                 </div>
-
-                {/* Sparkline */}
-                {history.length >= 2 && (
-                  <div className="border-t border-[#EDEDED] pt-4">
-                    <PriceSparkline history={history} />
-                  </div>
-                )}
-
-                {/* Log price inline */}
-                {logPriceOpen && (
-                  <div className="border border-[#DEDEDE] p-3 space-y-3 bg-[#F5F5F5]">
-                    <p className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Log current price</p>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Current price"
-                        value={newPrice}
-                        onChange={(e) => setNewPrice(e.target.value)}
-                        className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-8"
-                      />
-                      <Input
-                        placeholder="Note (optional)"
-                        value={priceNote}
-                        onChange={(e) => setPriceNote(e.target.value)}
-                        className="text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-8"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (!newPrice) return;
-                          addPrice.mutate({ itemId: item.id, price: parseFloat(newPrice), currency: item.currency ?? "USD", note: priceNote || undefined });
-                        }}
-                        disabled={addPrice.isPending || !newPrice}
-                        className="flex items-center gap-1.5 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-3 py-1.5 hover:bg-[#323232] transition-colors disabled:opacity-40"
-                      >
-                        {addPrice.isPending && <Loader2 size={10} className="animate-spin" />}
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setLogPriceOpen(false)}
-                        className="text-[10px] tracking-wider uppercase text-[#5A5A5A] hover:text-black transition-colors px-2"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Price Tracker */}
+                <div className="border-t border-[#EDEDED] pt-4">
+                  <PriceTracker
+                    itemId={item.id}
+                    purchasePrice={item.purchasePrice ?? null}
+                    currency={item.currency ?? "USD"}
+                    onPriceUpdated={() => { refetch(); onUpdate(); }}
+                  />
+                </div>
 
                 {/* Note */}
                 {item.personalNote && (
@@ -370,7 +321,6 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                 <div className="border-t border-[#EDEDED] pt-4 grid grid-cols-2 gap-2">
                   {[
                     { label: "Mark worn", icon: <CheckCircle2 size={11} />, onClick: () => markWorn.mutate({ id: item.id }), disabled: markWorn.isPending },
-                    { label: "Log price", icon: <RefreshCw size={11} />, onClick: () => setLogPriceOpen(!logPriceOpen), disabled: false },
                     { label: "Share", icon: <Share2 size={11} />, onClick: handleShare, disabled: false },
                     { label: item.inCart ? "In wishlist" : "Wishlist", icon: <ShoppingBag size={11} fill={item.inCart ? "currentColor" : "none"} />, onClick: () => item.inCart ? removeFromCart.mutate({ itemId: item.id }) : addToCart.mutate({ itemId: item.id }), disabled: addToCart.isPending || removeFromCart.isPending, filled: item.inCart },
                     { label: "Edit", icon: <Edit2 size={11} />, onClick: () => setEditOpen(true), disabled: false },
@@ -395,6 +345,7 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                   </button>
                 </div>
               </div>
+              </div>{/* end two-col */}
             </>
           )}
         </DialogContent>
