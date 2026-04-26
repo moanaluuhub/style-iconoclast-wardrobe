@@ -1,4 +1,4 @@
-import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -7,6 +7,7 @@ import {
   InsertPriceHistory,
   InsertOutfit,
   InsertOutfitItem,
+  InsertDesignerShop,
   itemTags,
   outfitItems,
   outfits,
@@ -14,6 +15,7 @@ import {
   users,
   wardrobeItems,
   cartItems,
+  designersShops,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -354,6 +356,75 @@ export async function isInCart(userId: number, itemId: number) {
     .where(and(eq(cartItems.userId, userId), eq(cartItems.itemId, itemId)))
     .limit(1);
   return result.length > 0;
+}
+
+// ─── Sort Order ───────────────────────────────────────────────────────────────
+
+export async function updateItemSortOrder(userId: number, orderedIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // Update each item's sortOrder in a loop
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      db
+        .update(wardrobeItems)
+        .set({ sortOrder: index })
+        .where(and(eq(wardrobeItems.id, id), eq(wardrobeItems.userId, userId)))
+    )
+  );
+}
+
+// ─── Designers & Shops ─────────────────────────────────────────────────────────
+
+export async function getDesignersShops(
+  userId: number,
+  opts: { search?: string; type?: string; favoritesOnly?: boolean } = {}
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(designersShops.userId, userId)];
+  if (opts.search) {
+    conditions.push(like(designersShops.name, `%${opts.search}%`));
+  }
+  if (opts.type) {
+    conditions.push(eq(designersShops.type, opts.type as any));
+  }
+  if (opts.favoritesOnly) {
+    conditions.push(eq(designersShops.isFavorite, true));
+  }
+  return db
+    .select()
+    .from(designersShops)
+    .where(and(...conditions))
+    .orderBy(desc(designersShops.isFavorite), asc(designersShops.name));
+}
+
+export async function createDesignerShop(data: InsertDesignerShop) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(designersShops).values(data);
+  return (result[0] as any).insertId as number;
+}
+
+export async function updateDesignerShop(
+  id: number,
+  userId: number,
+  data: Partial<InsertDesignerShop>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .update(designersShops)
+    .set(data)
+    .where(and(eq(designersShops.id, id), eq(designersShops.userId, userId)));
+}
+
+export async function deleteDesignerShop(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .delete(designersShops)
+    .where(and(eq(designersShops.id, id), eq(designersShops.userId, userId)));
 }
 
 // ─── Statistics ────────────────────────────────────────────────────────────────

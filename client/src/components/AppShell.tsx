@@ -3,7 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shirt, Layers, BookOpen, BarChart2, LogOut, LogIn, ShoppingCart } from "lucide-react";
+import { Shirt, Layers, BookOpen, BarChart2, LogOut, LogIn, ShoppingCart, Heart } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import CartPanel from "./CartPanel";
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Wardrobe", icon: Shirt },
   { href: "/canvas", label: "Canvas", icon: Layers },
   { href: "/outfits", label: "Outfits", icon: BookOpen },
+  { href: "/designers", label: "Designers", icon: Heart },
   { href: "/stats", label: "Statistics", icon: BarChart2 },
 ];
 

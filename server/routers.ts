@@ -26,6 +26,11 @@ import {
   addToCart,
   removeFromCart,
   isInCart,
+  updateItemSortOrder,
+  getDesignersShops,
+  createDesignerShop,
+  updateDesignerShop,
+  deleteDesignerShop,
 } from "./db";
 import { storagePut } from "./storage";
 
@@ -337,6 +342,13 @@ const itemsRouter = router({
         return { success: false, data: null };
       }
     }),
+
+  reorder: protectedProcedure
+    .input(z.object({ orderedIds: z.array(z.number()) }))
+    .mutation(async ({ ctx, input }) => {
+      await updateItemSortOrder(ctx.user.id, input.orderedIds);
+      return { success: true };
+    }),
 });
 
 // ─── Price History Router ──────────────────────────────────────────────────────
@@ -398,7 +410,7 @@ const outfitsRouter = router({
         name: z.string().min(1),
         slots: z.array(
           z.object({
-            slot: z.enum(["head", "top", "bottom", "shoes", "accessory"]),
+            slot: z.enum(["head", "top", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]),
             itemId: z.number(),
           })
         ),
@@ -450,7 +462,74 @@ const cartRouter = router({
     }),
 });
 
-// ─── Stats Router ──────────────────────────────────────────────────────────────
+// ─── Designers & Shops Router ───────────────────────────────────────────────────────────────
+
+const designersRouter = router({
+  list: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        type: z.string().optional(),
+        favoritesOnly: z.boolean().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return getDesignersShops(ctx.user.id, input);
+    }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        type: z.enum(["designer", "shop", "brand"]).default("designer"),
+        url: z.string().url().optional().or(z.literal("")),
+        location: z.string().optional(),
+        notes: z.string().optional(),
+        logoUrl: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const id = await createDesignerShop({
+        userId: ctx.user.id,
+        name: input.name,
+        type: input.type,
+        url: input.url || null,
+        location: input.location || null,
+        notes: input.notes || null,
+        logoUrl: input.logoUrl || null,
+        isFavorite: false,
+      });
+      return { id };
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().min(1).optional(),
+        type: z.enum(["designer", "shop", "brand"]).optional(),
+        url: z.string().optional(),
+        location: z.string().optional(),
+        notes: z.string().optional(),
+        isFavorite: z.boolean().optional(),
+        logoUrl: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateDesignerShop(id, ctx.user.id, data as any);
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteDesignerShop(input.id, ctx.user.id);
+      return { success: true };
+    }),
+});
+
+// ─── Stats Router ────────────────────────────────────────────────────────────────
 
 const statsRouter = router({
   summary: protectedProcedure.query(async ({ ctx }) => {
@@ -475,6 +554,7 @@ export const appRouter = router({
   outfits: outfitsRouter,
   cart: cartRouter,
   stats: statsRouter,
+  designers: designersRouter,
 });
 
 export type AppRouter = typeof appRouter;

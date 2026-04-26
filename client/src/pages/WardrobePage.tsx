@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus, Search, Heart, TrendingUp, TrendingDown, Minus,
-  SlidersHorizontal, X, Share2, ShoppingBag, ShoppingCart,
+  SlidersHorizontal, X, Share2, ShoppingBag, ShoppingCart, GripVertical,
 } from "lucide-react";
 import AddEditItemModal from "@/components/AddEditItemModal";
 import ItemDetailModal from "@/components/ItemDetailModal";
@@ -14,6 +14,23 @@ import CartPanel from "@/components/CartPanel";
 import { CATEGORIES, COLORS } from "@/lib/types";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 function TrendBadge({ item }: { item: any }) {
   const history = item.priceHistory ?? [];
@@ -39,6 +56,53 @@ function TrendBadge({ item }: { item: any }) {
     <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-sm bg-emerald-50 text-emerald-700">
       <TrendingDown size={9} /> {pct.toFixed(0)}%
     </span>
+  );
+}
+
+function SortableItemCard({
+  item,
+  onClick,
+  onCartToggle,
+  inCart,
+  onLoveToggle,
+  dragMode,
+}: {
+  item: any;
+  onClick: () => void;
+  onCartToggle: (e: React.MouseEvent) => void;
+  inCart: boolean;
+  onLoveToggle: (e: React.MouseEvent) => void;
+  dragMode: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      {dragMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 left-2 z-20 bg-background/80 backdrop-blur-sm rounded-full p-1.5 cursor-grab active:cursor-grabbing shadow-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={13} className="text-muted-foreground" />
+        </div>
+      )}
+      <ItemCard
+        item={item}
+        onClick={dragMode ? () => {} : onClick}
+        onCartToggle={onCartToggle}
+        inCart={inCart}
+        onLoveToggle={onLoveToggle}
+      />
+    </div>
   );
 }
 
@@ -188,6 +252,8 @@ export default function WardrobePage() {
   const [addOpen, setAddOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [dragMode, setDragMode] = useState(false);
+  const [localOrder, setLocalOrder] = useState<any[]>([]);
 
   const utils = trpc.useUtils();
 
@@ -272,6 +338,30 @@ export default function WardrobePage() {
   const handleLoveToggle = (e: React.MouseEvent, item: any) => {
     e.stopPropagation();
     toggleLove.mutate({ id: item.id, isLoved: !item.isLoved });
+  };
+
+  // Sync local order when items load
+  useEffect(() => {
+    setLocalOrder(items as any[]);
+  }, [items]);
+
+  const reorder = trpc.items.reorder.useMutation({
+    onError: () => toast.error("Failed to save order"),
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localOrder.findIndex((i) => i.id === active.id);
+    const newIndex = localOrder.findIndex((i) => i.id === over.id);
+    const newOrder = arrayMove(localOrder, oldIndex, newIndex);
+    setLocalOrder(newOrder);
+    reorder.mutate({ orderedIds: newOrder.map((i) => i.id) });
   };
 
   if (loading) {
@@ -447,17 +537,37 @@ export default function WardrobePage() {
           </Button>
         </div>
       ) : (
-        <div className="masonry-grid">
-          {items.map((item: any) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onClick={() => setSelectedItemId(item.id)}
-              onCartToggle={(e) => handleCartToggle(e, item)}
-              inCart={cartItemIds.has(item.id)}
-              onLoveToggle={(e) => handleLoveToggle(e, item)}
-            />
-          ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={localOrder.map((i) => i.id)} strategy={rectSortingStrategy}>
+            <div className="masonry-grid">
+              {localOrder.map((item: any) => (
+                <SortableItemCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => setSelectedItemId(item.id)}
+                  onCartToggle={(e) => handleCartToggle(e, item)}
+                  inCart={cartItemIds.has(item.id)}
+                  onLoveToggle={(e) => handleLoveToggle(e, item)}
+                  dragMode={dragMode}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      {/* Drag mode toggle */}
+      {isAuthenticated && !isLoading && items.length > 0 && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant={dragMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDragMode((d) => !d)}
+            className="text-xs gap-1.5 tracking-wide"
+          >
+            <GripVertical size={13} />
+            {dragMode ? "Done organising" : "Organise"}
+          </Button>
         </div>
       )}
 

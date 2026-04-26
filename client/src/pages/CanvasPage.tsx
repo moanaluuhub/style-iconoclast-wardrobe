@@ -175,8 +175,7 @@ function SlotCard({
     </div>
   );
 }
-
-// ─── Canvas Page ───────────────────────────────────────────────────────────────
+// ─── Canvas Page ────────────────────────────────────────────────────────────────
 
 type SlotState = Record<OutfitSlot, any | null>;
 
@@ -186,6 +185,9 @@ const EMPTY_SLOTS: SlotState = {
   bottom: null,
   shoes: null,
   accessory: null,
+  bag: null,
+  jewelry: null,
+  other: null,
 };
 
 export default function CanvasPage() {
@@ -194,6 +196,19 @@ export default function CanvasPage() {
   const [pickerSlot, setPickerSlot] = useState<OutfitSlot | null>(null);
   const [outfitName, setOutfitName] = useState("");
   const [viewItemId, setViewItemId] = useState<number | null>(null);
+  // Optional slots that the user has chosen to add
+  const [activeOptional, setActiveOptional] = useState<OutfitSlot[]>([]);
+
+  const optionalSlots = OUTFIT_SLOTS.filter((s) => s.optional);
+  const coreSlots = OUTFIT_SLOTS.filter((s) => !s.optional);
+
+  const addOptionalSlot = (slot: OutfitSlot) => {
+    setActiveOptional((prev) => prev.includes(slot) ? prev : [...prev, slot]);
+  };
+  const removeOptionalSlot = (slot: OutfitSlot) => {
+    setActiveOptional((prev) => prev.filter((s) => s !== slot));
+    setSlots((s) => ({ ...s, [slot]: null }));
+  };
 
   const utils = trpc.useUtils();
   const saveOutfit = trpc.outfits.create.useMutation({
@@ -254,7 +269,7 @@ export default function CanvasPage() {
         </p>
       </div>
 
-      {/* Slot grid — 2×2 + 1 center */}
+      {/* Core slot grid */}
       <div className="space-y-4">
         {/* Row 1: Head + Accessory */}
         <div className="grid grid-cols-2 gap-4">
@@ -264,7 +279,7 @@ export default function CanvasPage() {
               <SlotCard
                 key={slot}
                 slot={slot}
-                label={config.label}
+                label={`${config.icon} ${config.label}`}
                 item={slots[slot]}
                 onAdd={() => setPickerSlot(slot)}
                 onSwap={() => setPickerSlot(slot)}
@@ -283,7 +298,7 @@ export default function CanvasPage() {
               <SlotCard
                 key={slot}
                 slot={slot}
-                label={config.label}
+                label={`${config.icon} ${config.label}`}
                 item={slots[slot]}
                 onAdd={() => setPickerSlot(slot)}
                 onSwap={() => setPickerSlot(slot)}
@@ -299,7 +314,7 @@ export default function CanvasPage() {
           <div />
           <SlotCard
             slot="shoes"
-            label="Shoes"
+            label="👟 Shoes"
             item={slots.shoes}
             onAdd={() => setPickerSlot("shoes")}
             onSwap={() => setPickerSlot("shoes")}
@@ -308,6 +323,55 @@ export default function CanvasPage() {
           />
           <div />
         </div>
+
+        {/* Active optional slots */}
+        {activeOptional.length > 0 && (
+          <div className="grid grid-cols-2 gap-4">
+            {activeOptional.map((slot) => {
+              const config = OUTFIT_SLOTS.find((s) => s.slot === slot)!;
+              return (
+                <div key={slot} className="relative">
+                  <SlotCard
+                    slot={slot}
+                    label={`${config.icon} ${config.label}`}
+                    item={slots[slot]}
+                    onAdd={() => setPickerSlot(slot)}
+                    onSwap={() => setPickerSlot(slot)}
+                    onClear={() => setSlots((s) => ({ ...s, [slot]: null }))}
+                    onViewItem={setViewItemId}
+                  />
+                  {/* Remove optional slot button */}
+                  <button
+                    onClick={() => removeOptionalSlot(slot)}
+                    className="absolute -top-2 -right-2 z-10 bg-background border border-border rounded-full w-5 h-5 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                    title={`Remove ${config.label} slot`}
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Add optional slot buttons */}
+        {optionalSlots.some((s) => !activeOptional.includes(s.slot)) && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            <span className="text-[10px] tracking-widest uppercase text-muted-foreground self-center mr-1">Add slot:</span>
+            {optionalSlots
+              .filter((s) => !activeOptional.includes(s.slot))
+              .map((s) => (
+                <button
+                  key={s.slot}
+                  onClick={() => addOptionalSlot(s.slot)}
+                  className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-sm border border-dashed border-border hover:border-primary/60 hover:bg-accent text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <span>{s.icon}</span>
+                  <span>{s.label}</span>
+                </button>
+              ))}
+          </div>
+        )}
       </div>
 
       {/* Divider */}

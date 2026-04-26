@@ -10,6 +10,7 @@ import CanvasPage from "./pages/CanvasPage";
 import OutfitsPage from "./pages/OutfitsPage";
 import StatsPage from "./pages/StatsPage";
 import LoginPage from "./pages/LoginPage";
+import DesignersPage from "./pages/DesignersPage";
 
 function Router() {
   return (
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/" component={WardrobePage} />
       <Route path="/canvas" component={CanvasPage} />
       <Route path="/outfits" component={OutfitsPage} />
+      <Route path="/designers" component={DesignersPage} />
       <Route path="/stats" component={StatsPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/404" component={NotFound} />

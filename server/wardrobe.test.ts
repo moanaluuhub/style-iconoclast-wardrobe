@@ -147,3 +147,54 @@ describe("priceHistory router", () => {
     expect(Array.isArray(history)).toBe(true);
   });
 });
+
+// ─── Designers Router Tests ────────────────────────────────────────────────────
+describe("designers router", () => {
+  it("designers.list returns an array", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const entries = await caller.designers.list({});
+    expect(Array.isArray(entries)).toBe(true);
+  });
+
+  it("designers.create creates a new entry and designers.delete removes it", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const { id } = await caller.designers.create({
+      name: "Test House",
+      type: "designer",
+      url: "https://example.com",
+      location: "Paris",
+    });
+    expect(id).toBeGreaterThan(0);
+
+    const entries = await caller.designers.list({ search: "Test House" });
+    expect(entries.some((e: any) => e.id === id)).toBe(true);
+
+    await caller.designers.delete({ id });
+    const after = await caller.designers.list({ search: "Test House" });
+    expect(after.some((e: any) => e.id === id)).toBe(false);
+  });
+
+  it("designers.update toggles isFavorite", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const { id } = await caller.designers.create({ name: "Fav Test", type: "shop" });
+    await caller.designers.update({ id, isFavorite: true });
+    const entries = await caller.designers.list({ favoritesOnly: true });
+    expect(entries.some((e: any) => e.id === id)).toBe(true);
+    // cleanup
+    await caller.designers.delete({ id });
+  });
+
+  it("designers.list filters by type", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const { id } = await caller.designers.create({ name: "Brand Test", type: "brand" });
+    const brands = await caller.designers.list({ type: "brand" });
+    expect(brands.some((e: any) => e.id === id)).toBe(true);
+    const shops = await caller.designers.list({ type: "shop" });
+    expect(shops.some((e: any) => e.id === id)).toBe(false);
+    await caller.designers.delete({ id });
+  });
+});

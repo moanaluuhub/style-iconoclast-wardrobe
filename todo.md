@@ -97,3 +97,16 @@
 - [x] Remove from cart in panel
 - [x] Robust OG/meta tag extraction as primary parser, LLM as enrichment fallback
 - [x] Like toggle interaction on item cards (optimistic update)
+
+## Enhancement Round 3
+- [x] Wardrobe: drag-to-reorder grid (dnd-kit sortable, persist sortOrder to DB)
+- [x] Canvas: add/remove optional slots (bag, jewelry, other) dynamically
+- [x] Canvas: expanded slot categories beyond original 5
+- [x] Outfits: share look button (Web Share API / copy link)
+- [x] Outfits: click outfit card to open detail view modal
+- [x] Outfit detail modal: full-size item thumbnails, names, prices
+- [x] Designers & Shops page: new nav item after Outfits
+- [x] Designers & Shops: DB table (designers_shops: userId, name, type, url, notes, isFavorite)
+- [x] Designers & Shops: tRPC router (list, add, update, delete, toggleFavorite)
+- [x] Designers & Shops: filter by type (designer/shop), favorites toggle
+- [x] Designers & Shops: search by name

@@ -58,6 +58,7 @@ export const wardrobeItems = mysqlTable("wardrobe_items", {
   isLoved: boolean("isLoved").default(false).notNull(),
   wearCount: int("wearCount").default(0).notNull(),
   lastWornAt: timestamp("lastWornAt"),
+  sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -113,7 +114,7 @@ export const outfitItems = mysqlTable("outfit_items", {
   id: int("id").autoincrement().primaryKey(),
   outfitId: int("outfitId").notNull(),
   itemId: int("itemId").notNull(),
-  slot: mysqlEnum("slot", ["head", "top", "bottom", "shoes", "accessory"]).notNull(),
+  slot: mysqlEnum("slot", ["head", "top", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]).notNull(),
 });
 
 export type OutfitItem = typeof outfitItems.$inferSelect;
@@ -130,3 +131,22 @@ export const cartItems = mysqlTable("cart_items", {
 
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = typeof cartItems.$inferInsert;
+
+// ─── Designers & Shops ─────────────────────────────────────────────────────────
+
+export const designersShops = mysqlTable("designers_shops", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: mysqlEnum("type", ["designer", "shop", "brand"]).default("designer").notNull(),
+  url: text("url"),
+  location: varchar("location", { length: 255 }),
+  notes: text("notes"),
+  isFavorite: boolean("isFavorite").default(false).notNull(),
+  logoUrl: text("logoUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DesignerShop = typeof designersShops.$inferSelect;
+export type InsertDesignerShop = typeof designersShops.$inferInsert;
