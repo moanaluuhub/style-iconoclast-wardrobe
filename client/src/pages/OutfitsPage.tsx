@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Trash2, Layers, Share2, Eye, X, Pencil, RefreshCw, Check, Loader2 } from "lucide-react";
+import { Trash2, Layers, Share2, Eye, X, Pencil, RefreshCw, Check, Loader2, Shirt } from "lucide-react";
 import ItemDetailModal from "@/components/ItemDetailModal";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
@@ -487,12 +487,16 @@ function OutfitCard({
   onItemClick,
   onView,
   onEdit,
+  onWear,
+  isWearing = false,
 }: {
   outfit: any;
   onDelete: () => void;
   onItemClick: (id: number) => void;
   onView: () => void;
   onEdit: () => void;
+  onWear: () => void;
+  isWearing?: boolean;
 }) {
   const allSlots = OUTFIT_SLOTS;
   const displayItems = outfit.items ?? [];
@@ -641,6 +645,7 @@ export default function OutfitsPage() {
   const [viewItemId, setViewItemId] = useState<number | null>(null);
   const [viewOutfit, setViewOutfit] = useState<any | null>(null);
   const [editOutfit, setEditOutfit] = useState<any | null>(null);
+  const [wearingId, setWearingId] = useState<number | null>(null);
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
 
@@ -655,6 +660,14 @@ export default function OutfitsPage() {
       setDeleteId(null);
     },
     onError: (e) => toast.error(e.message),
+  });
+  const wearToday = trpc.outfits.wearToday.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Wore today — ${data.count} piece${data.count === 1 ? "" : "s"} updated`);
+      utils.outfits.list.invalidate();
+      setWearingId(null);
+    },
+    onError: (e) => { toast.error(e.message); setWearingId(null); },
   });
 
   if (loading) return null;
@@ -719,6 +732,8 @@ export default function OutfitsPage() {
               onItemClick={setViewItemId}
               onView={() => setViewOutfit(outfit)}
               onEdit={() => setEditOutfit(outfit)}
+              onWear={() => { setWearingId(outfit.id); wearToday.mutate({ id: outfit.id }); }}
+              isWearing={wearingId === outfit.id && wearToday.isPending}
             />
           ))}
         </div>

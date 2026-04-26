@@ -28,6 +28,7 @@ import {
   removeFromCart,
   isInCart,
   updateItemSortOrder,
+  getAllUserTags,
   getDesignersShops,
   createDesignerShop,
   updateDesignerShop,
@@ -350,6 +351,9 @@ const itemsRouter = router({
       await updateItemSortOrder(ctx.user.id, input.orderedIds);
       return { success: true };
     }),
+  tags: protectedProcedure.query(async ({ ctx }) => {
+    return getAllUserTags(ctx.user.id);
+  }),
 });
 
 // ─── Price History Router ──────────────────────────────────────────────────────
@@ -450,6 +454,19 @@ const outfitsRouter = router({
     .mutation(async ({ ctx, input }) => {
       await updateOutfit(input.id, ctx.user.id, input.name, input.slots, input.totalPrice);
       return { success: true };
+    }),
+  wearToday: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const outfit = await getOutfitById(input.id, ctx.user.id);
+      if (!outfit) throw new TRPCError({ code: "NOT_FOUND" });
+      const items = await getOutfitItems(input.id);
+      await Promise.all(
+        items
+          .filter((oi) => oi.itemId != null)
+          .map((oi) => markItemWorn(oi.itemId!, ctx.user.id))
+      );
+      return { count: items.length };
     }),
 });
 

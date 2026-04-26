@@ -71,7 +71,7 @@ export default function StatsPage() {
   if (isLoading || !stats) {
     return (
       <div className="container py-8">
-        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black mb-8">Statistics</h1>
+        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black mb-8">My Archive</h1>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-28 bg-[#F5F5F5] animate-pulse" />
@@ -88,7 +88,7 @@ export default function StatsPage() {
     <div className="container py-8">
       {/* Header */}
       <div className="mb-8 border-b border-[#EDEDED] pb-6">
-        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Statistics</h1>
+        <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">My Archive</h1>
         <p className="text-[12px] text-[#ACABAB] mt-1 tracking-wide">
           An overview of your wardrobe
         </p>

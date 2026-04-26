@@ -127,3 +127,8 @@
 - [x] Stats page: clean charts, black/white/grey data viz
 - [x] Designers page: clean index style
 - [x] LoginPage: NAP-style centered login
+
+## Enhancement Round 6
+- [x] Wardrobe: tag filter chips row below search bar (all tags from user's items, one-click filter)
+- [x] Outfits: "Wore this today" button — increments wornCount on every item in the outfit
+- [x] Rename Statistics → My Archive (nav label, page heading, AppShell)

@@ -241,6 +241,7 @@ export default function WardrobePage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [dragMode, setDragMode] = useState(false);
   const [localOrder, setLocalOrder] = useState<any[]>([]);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -250,6 +251,7 @@ export default function WardrobePage() {
   );
 
   const { data: items = [], isLoading, refetch } = trpc.items.list.useQuery(listInput, { enabled: isAuthenticated });
+  const { data: allTags = [] } = trpc.items.tags.useQuery(undefined, { enabled: isAuthenticated });
   const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, { enabled: isAuthenticated });
 
   const addToCart = trpc.cart.add.useMutation({ onSuccess: () => { utils.cart.list.invalidate(); toast.success("Added to wishlist"); }, onError: () => toast.error("Failed to add") });
@@ -279,8 +281,11 @@ export default function WardrobePage() {
     toggleLove.mutate({ id: item.id, isLoved: !item.isLoved });
   };
 
-  const itemIdsKey = items.map((i: any) => i.id).join(",");
-  useEffect(() => { setLocalOrder(items as any[]); }, [itemIdsKey]);
+  const displayedItems = activeTag
+    ? (items as any[]).filter((item) => item.tags?.includes(activeTag))
+    : (items as any[]);
+  const itemIdsKey = displayedItems.map((i: any) => i.id).join(",");
+  useEffect(() => { setLocalOrder(displayedItems); }, [itemIdsKey]);
 
   const reorder = trpc.items.reorder.useMutation({ onError: () => toast.error("Failed to save order") });
   const sensors = useSensors(
@@ -430,6 +435,34 @@ export default function WardrobePage() {
         </div>
       )}
 
+      {/* Tag filter chips */}
+      {(allTags as string[]).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-6">
+          <button
+            onClick={() => setActiveTag(null)}
+            className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
+              activeTag === null
+                ? "bg-black text-white border-black"
+                : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+            }`}
+          >
+            All
+          </button>
+          {(allTags as string[]).map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
+                activeTag === tag
+                  ? "bg-black text-white border-black"
+                  : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Grid */}
       {isLoading ? (
         <div className="masonry-grid">
@@ -450,7 +483,7 @@ export default function WardrobePage() {
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={localOrder.map((i) => i.id)} strategy={rectSortingStrategy}>
+          <SortableContext items={localOrder.map((i: any) => i.id)} strategy={rectSortingStrategy}>
             <div className="masonry-grid">
               {localOrder.map((item: any) => (
                 <SortableItemCard

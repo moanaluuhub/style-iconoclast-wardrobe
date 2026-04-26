@@ -216,6 +216,18 @@ export async function setTagsForItem(itemId: number, userId: number, labels: str
   }
 }
 
+
+// ─── All User Tags ─────────────────────────────────────────────────────────────
+export async function getAllUserTags(userId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .selectDistinct({ label: itemTags.label })
+    .from(itemTags)
+    .where(eq(itemTags.userId, userId))
+    .orderBy(itemTags.label);
+  return rows.map((r) => r.label);
+}
 // ─── Price History ─────────────────────────────────────────────────────────────
 
 export async function getPriceHistory(itemId: number, userId: number) {
