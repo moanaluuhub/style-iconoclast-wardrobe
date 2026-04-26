@@ -12,7 +12,8 @@ export default function LoginPage() {
     if (!loading && isAuthenticated) {
       navigate("/");
     }
-  }, [isAuthenticated, loading, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, loading]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">

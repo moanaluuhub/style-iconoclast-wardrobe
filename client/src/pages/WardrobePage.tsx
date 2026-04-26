@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -257,15 +257,18 @@ export default function WardrobePage() {
 
   const utils = trpc.useUtils();
 
-  const { data: items = [], isLoading, refetch } = trpc.items.list.useQuery(
-    {
+  const listInput = useMemo(
+    () => ({
       search: search || undefined,
       category: category !== "all" ? category : undefined,
       color: color !== "all" ? color : undefined,
       sortBy,
-    },
-    { enabled: isAuthenticated }
+    }),
+    [search, category, color, sortBy]
   );
+  const { data: items = [], isLoading, refetch } = trpc.items.list.useQuery(listInput, {
+    enabled: isAuthenticated,
+  });
 
   const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -302,34 +305,16 @@ export default function WardrobePage() {
   const toggleLove = trpc.items.update.useMutation({
     onMutate: async ({ id, isLoved }) => {
       await utils.items.list.cancel();
-      const prev = utils.items.list.getData({
-        search: search || undefined,
-        category: category !== "all" ? category : undefined,
-        color: color !== "all" ? color : undefined,
-        sortBy,
-      });
+      const prev = utils.items.list.getData(listInput);
       utils.items.list.setData(
-        {
-          search: search || undefined,
-          category: category !== "all" ? category : undefined,
-          color: color !== "all" ? color : undefined,
-          sortBy,
-        },
+        listInput,
         (old) => (old ?? []).map((i: any) => (i.id === id ? { ...i, isLoved } : i))
       );
       return { prev };
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) {
-        utils.items.list.setData(
-          {
-            search: search || undefined,
-            category: category !== "all" ? category : undefined,
-            color: color !== "all" ? color : undefined,
-            sortBy,
-          },
-          ctx.prev
-        );
+        utils.items.list.setData(listInput, ctx.prev);
       }
     },
     onSettled: () => utils.items.list.invalidate(),
@@ -340,10 +325,12 @@ export default function WardrobePage() {
     toggleLove.mutate({ id: item.id, isLoved: !item.isLoved });
   };
 
-  // Sync local order when items load
+  // Sync local order only when item ids change (not on every render)
+  const itemIdsKey = items.map((i: any) => i.id).join(",");
   useEffect(() => {
     setLocalOrder(items as any[]);
-  }, [items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemIdsKey]);
 
   const reorder = trpc.items.reorder.useMutation({
     onError: () => toast.error("Failed to save order"),
