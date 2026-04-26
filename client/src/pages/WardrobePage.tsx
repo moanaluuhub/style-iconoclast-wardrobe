@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus, Search, Heart, TrendingUp, TrendingDown, Minus,
-  SlidersHorizontal, X, Share2, ShoppingBag, ShoppingCart, GripVertical,
+  SlidersHorizontal, X, Share2, ShoppingBag, ShoppingCart, GripVertical, Pencil,
 } from "lucide-react";
 import AddEditItemModal from "@/components/AddEditItemModal";
 import ItemDetailModal from "@/components/ItemDetailModal";
@@ -65,6 +65,7 @@ function SortableItemCard({
   onCartToggle,
   inCart,
   onLoveToggle,
+  onEdit,
   dragMode,
 }: {
   item: any;
@@ -72,6 +73,7 @@ function SortableItemCard({
   onCartToggle: (e: React.MouseEvent) => void;
   inCart: boolean;
   onLoveToggle: (e: React.MouseEvent) => void;
+  onEdit: (e: React.MouseEvent) => void;
   dragMode: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -101,6 +103,7 @@ function SortableItemCard({
         onCartToggle={onCartToggle}
         inCart={inCart}
         onLoveToggle={onLoveToggle}
+        onEdit={onEdit}
       />
     </div>
   );
@@ -112,12 +115,14 @@ function ItemCard({
   onCartToggle,
   inCart,
   onLoveToggle,
+  onEdit,
 }: {
   item: any;
   onClick: () => void;
   onCartToggle: (e: React.MouseEvent) => void;
   inCart: boolean;
   onLoveToggle: (e: React.MouseEvent) => void;
+  onEdit: (e: React.MouseEvent) => void;
 }) {
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -174,6 +179,13 @@ function ItemCard({
           </button>
           {/* Share + Cart */}
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={onEdit}
+              className="bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-colors rounded-full p-1.5"
+              title="Edit piece"
+            >
+              <Pencil size={11} className="text-white" />
+            </button>
             <button
               onClick={handleShare}
               className="bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-colors rounded-full p-1.5"
@@ -250,6 +262,7 @@ export default function WardrobePage() {
   const [sortBy, setSortBy] = useState("recent");
   const [showFilters, setShowFilters] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [dragMode, setDragMode] = useState(false);
@@ -535,6 +548,7 @@ export default function WardrobePage() {
                   onCartToggle={(e) => handleCartToggle(e, item)}
                   inCart={cartItemIds.has(item.id)}
                   onLoveToggle={(e) => handleLoveToggle(e, item)}
+                  onEdit={(e) => { e.stopPropagation(); setEditItem(item); }}
                   dragMode={dragMode}
                 />
               ))}
@@ -564,6 +578,14 @@ export default function WardrobePage() {
         onClose={() => setAddOpen(false)}
         onSuccess={() => refetch()}
       />
+      {editItem && (
+        <AddEditItemModal
+          open={!!editItem}
+          onClose={() => setEditItem(null)}
+          onSuccess={() => { refetch(); setEditItem(null); }}
+          editItem={editItem}
+        />
+      )}
       {selectedItemId != null && (
         <ItemDetailModal
           itemId={selectedItemId}

@@ -110,3 +110,8 @@
 - [x] Designers & Shops: tRPC router (list, add, update, delete, toggleFavorite)
 - [x] Designers & Shops: filter by type (designer/shop), favorites toggle
 - [x] Designers & Shops: search by name
+
+## Enhancement Round 4
+- [ ] Wardrobe: edit button on item cards (pencil icon in hover overlay, opens AddEditItemModal pre-filled)
+- [ ] Canvas: replace colored slot icons with neutral stone/muted icons
+- [ ] Outfits: edit mode on saved outfits (swap/clear individual slots, rename, save)

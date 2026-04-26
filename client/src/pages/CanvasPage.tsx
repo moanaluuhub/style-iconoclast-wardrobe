@@ -6,7 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { OUTFIT_SLOTS, type OutfitSlot } from "@/lib/types";
-import { X, RefreshCw, Loader2, Save } from "lucide-react";
+import { X, RefreshCw, Loader2, Save, HardHat, Shirt, Scissors, Footprints, Watch, Briefcase, Gem, PlusCircle, type LucideIcon } from "lucide-react";
+
+// Map icon name strings to neutral lucide components
+const SLOT_ICONS: Record<string, LucideIcon> = {
+  hat: HardHat,
+  shirt: Shirt,
+  scissors: Scissors,
+  footprints: Footprints,
+  watch: Watch,
+  briefcase: Briefcase,
+  gem: Gem,
+  "plus-circle": PlusCircle,
+};
+function SlotIcon({ name, size = 14 }: { name: string; size?: number }) {
+  const Icon = SLOT_ICONS[name] ?? PlusCircle;
+  return <Icon size={size} className="text-muted-foreground/60" />;
+}
 import { getLoginUrl } from "@/const";
 import ItemDetailModal from "@/components/ItemDetailModal";
 
@@ -99,6 +115,7 @@ function SlotCard({
   onSwap,
   onClear,
   onViewItem,
+  iconName,
 }: {
   slot: OutfitSlot;
   label: string;
@@ -107,10 +124,12 @@ function SlotCard({
   onSwap: () => void;
   onClear: () => void;
   onViewItem: (id: number) => void;
+  iconName?: string;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[10px] tracking-widest uppercase text-muted-foreground text-center">
+      <span className="flex items-center justify-center gap-1 text-[10px] tracking-widest uppercase text-muted-foreground text-center">
+        {iconName && <SlotIcon name={iconName} size={11} />}
         {label}
       </span>
       <div
@@ -279,7 +298,8 @@ export default function CanvasPage() {
               <SlotCard
                 key={slot}
                 slot={slot}
-                label={`${config.icon} ${config.label}`}
+                label={config.label}
+                iconName={config.icon}
                 item={slots[slot]}
                 onAdd={() => setPickerSlot(slot)}
                 onSwap={() => setPickerSlot(slot)}
@@ -298,7 +318,8 @@ export default function CanvasPage() {
               <SlotCard
                 key={slot}
                 slot={slot}
-                label={`${config.icon} ${config.label}`}
+                label={config.label}
+                iconName={config.icon}
                 item={slots[slot]}
                 onAdd={() => setPickerSlot(slot)}
                 onSwap={() => setPickerSlot(slot)}
@@ -314,7 +335,8 @@ export default function CanvasPage() {
           <div />
           <SlotCard
             slot="shoes"
-            label="👟 Shoes"
+            label="Shoes"
+            iconName="footprints"
             item={slots.shoes}
             onAdd={() => setPickerSlot("shoes")}
             onSwap={() => setPickerSlot("shoes")}
@@ -333,7 +355,8 @@ export default function CanvasPage() {
                 <div key={slot} className="relative">
                   <SlotCard
                     slot={slot}
-                    label={`${config.icon} ${config.label}`}
+                    label={config.label}
+                iconName={config.icon}
                     item={slots[slot]}
                     onAdd={() => setPickerSlot(slot)}
                     onSwap={() => setPickerSlot(slot)}
@@ -366,7 +389,7 @@ export default function CanvasPage() {
                   onClick={() => addOptionalSlot(s.slot)}
                   className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-sm border border-dashed border-border hover:border-primary/60 hover:bg-accent text-muted-foreground hover:text-foreground transition-all"
                 >
-                  <span>{s.icon}</span>
+                  <SlotIcon name={s.icon} size={11} />
                   <span>{s.label}</span>
                 </button>
               ))}

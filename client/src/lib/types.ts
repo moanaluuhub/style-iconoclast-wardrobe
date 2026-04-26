@@ -26,14 +26,14 @@ export const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 export const OUTFIT_SLOTS: { slot: OutfitSlot; label: string; icon: string; categories: Category[]; optional: boolean }[] = [
-  { slot: "head", label: "Head", icon: "🎩", categories: ["accessories", "other"], optional: false },
-  { slot: "top", label: "Top", icon: "👕", categories: ["tops", "outerwear", "dresses", "suits", "activewear"], optional: false },
-  { slot: "bottom", label: "Bottom", icon: "👖", categories: ["bottoms", "dresses", "suits", "activewear"], optional: false },
-  { slot: "shoes", label: "Shoes", icon: "👟", categories: ["shoes"], optional: false },
-  { slot: "accessory", label: "Accessory", icon: "💍", categories: ["accessories"], optional: false },
-  { slot: "bag", label: "Bag", icon: "👜", categories: ["bags", "accessories"], optional: true },
-  { slot: "jewelry", label: "Jewelry", icon: "💎", categories: ["accessories", "other"], optional: true },
-  { slot: "other", label: "Other", icon: "✨", categories: ["accessories", "other", "activewear"], optional: true },
+  { slot: "head", label: "Head", icon: "hat", categories: ["accessories", "other"], optional: false },
+  { slot: "top", label: "Top", icon: "shirt", categories: ["tops", "outerwear", "dresses", "suits", "activewear"], optional: false },
+  { slot: "bottom", label: "Bottom", icon: "scissors", categories: ["bottoms", "dresses", "suits", "activewear"], optional: false },
+  { slot: "shoes", label: "Shoes", icon: "footprints", categories: ["shoes"], optional: false },
+  { slot: "accessory", label: "Accessory", icon: "watch", categories: ["accessories"], optional: false },
+  { slot: "bag", label: "Bag", icon: "briefcase", categories: ["bags", "accessories"], optional: true },
+  { slot: "jewelry", label: "Jewelry", icon: "gem", categories: ["accessories", "other"], optional: true },
+  { slot: "other", label: "Other", icon: "plus-circle", categories: ["accessories", "other", "activewear"], optional: true },
 ];
 
 export const SUGGESTED_TAGS = [

@@ -20,6 +20,7 @@ import {
   getOutfitById,
   getOutfitItems,
   createOutfit,
+  updateOutfit,
   deleteOutfit,
   getStats,
   getCartItems,
@@ -429,6 +430,25 @@ const outfitsRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await deleteOutfit(input.id, ctx.user.id);
+      return { success: true };
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().min(1),
+        slots: z.array(
+          z.object({
+            slot: z.enum(["head", "top", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]),
+            itemId: z.number(),
+          })
+        ),
+        totalPrice: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await updateOutfit(input.id, ctx.user.id, input.name, input.slots, input.totalPrice);
       return { success: true };
     }),
 });

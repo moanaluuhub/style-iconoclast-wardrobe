@@ -298,6 +298,32 @@ export async function createOutfit(
   return insertId;
 }
 
+export async function updateOutfit(
+  id: number,
+  userId: number,
+  name: string,
+  slots: { slot: string; itemId: number }[],
+  totalPrice?: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // Verify ownership
+  const existing = await db.select().from(outfits).where(and(eq(outfits.id, id), eq(outfits.userId, userId))).limit(1);
+  if (!existing.length) throw new Error("Outfit not found");
+  // Update name/price
+  await db.update(outfits).set({ name, totalPrice: totalPrice ?? null }).where(eq(outfits.id, id));
+  // Replace all outfit items
+  await db.delete(outfitItems).where(eq(outfitItems.outfitId, id));
+  if (slots.length > 0) {
+    await db.insert(outfitItems).values(
+      slots.map((s) => ({
+        outfitId: id,
+        itemId: s.itemId,
+        slot: s.slot as any,
+      }))
+    );
+  }
+}
 export async function deleteOutfit(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
