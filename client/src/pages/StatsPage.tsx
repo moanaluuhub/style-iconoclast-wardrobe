@@ -16,16 +16,16 @@ import {
 import { getLoginUrl } from "@/const";
 
 const CHART_COLORS = [
-  "#000000",
-  "#323232",
-  "#5A5A5A",
-  "#7A7A7A",
-  "#9A9A9A",
-  "#ACABAB",
-  "#BEBEBE",
-  "#D0D0D0",
-  "#E2E2E2",
-  "#F0F0F0",
+  "#1A1A2E",
+  "#C9A96E",
+  "#8B6F47",
+  "#4A7C59",
+  "#7B5EA7",
+  "#C75B5B",
+  "#3A7CA5",
+  "#D4845A",
+  "#5B8C5A",
+  "#9B6B9B",
 ];
 
 function StatCard({
@@ -181,7 +181,7 @@ export default function StatsPage() {
                 data={stats.categoryBreakdown}
                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDEDED" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 9, fontFamily: "Inter", fill: "#ACABAB" }}

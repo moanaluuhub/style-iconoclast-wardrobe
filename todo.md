@@ -117,13 +117,13 @@
 - [x] Outfits: edit mode on saved outfits (swap/clear individual slots, rename, save)
 
 ## Enhancement Round 5 — Net-a-Porter Redesign
-- [ ] Global CSS: pure black/white/grey palette, Inter font, remove grain texture, remove cream/ivory
-- [ ] AppShell: black top bar, white caps nav links, clean search icon, black wishlist/cart badge
-- [ ] WardrobePage: NAP-style product cards (white bg, black text, minimal border, brand in caps above title)
-- [ ] Add/Edit modal: clean black/white form, black CTA buttons
-- [ ] Item Detail modal: NAP product page style (large image left, details right)
-- [ ] Canvas page: black/white slot UI, clean typography
-- [ ] Outfits page: clean black/white list, editorial spacing
-- [ ] Stats page: clean charts, black/white/grey data viz
-- [ ] Designers page: clean index style
-- [ ] LoginPage: NAP-style centered login
+- [x] Global CSS: pure black/white/grey palette, Inter font, remove grain texture, remove cream/ivory
+- [x] AppShell: black top bar, white caps nav links, clean search icon, black wishlist/cart badge
+- [x] WardrobePage: NAP-style product cards (white bg, black text, minimal border, brand in caps above title)
+- [x] Add/Edit modal: clean black/white form, black CTA buttons
+- [x] Item Detail modal: NAP product page style (large image left, details right)
+- [x] Canvas page: black/white slot UI, clean typography
+- [x] Outfits page: clean black/white list, editorial spacing
+- [x] Stats page: clean charts, black/white/grey data viz
+- [x] Designers page: clean index style
+- [x] LoginPage: NAP-style centered login
