@@ -22,7 +22,7 @@ export default function LoginPage() {
           Private Collection
         </p>
         <h1 className="text-[28px] font-light text-black leading-none mb-1 tracking-tight">
-          The Wardrobe
+          Style Iconoclast
         </h1>
         <div className="w-8 h-px bg-black mx-auto my-6" />
         <p className="text-[12px] text-[#5A5A5A] mb-8 leading-relaxed tracking-wide">

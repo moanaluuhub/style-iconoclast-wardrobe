@@ -304,7 +304,7 @@ export default function WardrobePage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
         <div className="text-center max-w-xs">
           <h1 className="text-[22px] font-light tracking-[0.28em] uppercase text-black mb-2">
-            The Wardrobe
+            Style Iconoclast
           </h1>
           <div className="w-8 h-px bg-black mx-auto my-6" />
           <p className="text-[12px] tracking-[0.06em] text-[#5A5A5A] mb-8 leading-relaxed">

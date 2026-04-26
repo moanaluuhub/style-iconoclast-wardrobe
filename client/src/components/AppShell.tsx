@@ -50,7 +50,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 className="text-[17px] font-light tracking-[0.22em] uppercase text-black cursor-pointer select-none"
                 style={{ letterSpacing: "0.22em" }}
               >
-                THE WARDROBE
+                STYLE ICONOCLAST
               </span>
             </Link>
 
@@ -153,7 +153,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               className="text-[11px] tracking-[0.22em] uppercase text-black font-light"
               style={{ letterSpacing: "0.22em" }}
             >
-              THE WARDROBE
+              STYLE ICONOCLAST
             </span>
             <p className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">
               Your private fashion archive
