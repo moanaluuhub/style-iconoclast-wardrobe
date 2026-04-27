@@ -535,39 +535,36 @@ function OutfitCard({
       className="border border-[#EDEDED] hover:border-black transition-all duration-200 overflow-hidden cursor-pointer group"
       onClick={onView}
     >
-      {/* Thumbnail strip */}
+      {/* Thumbnail strip — only filled slots */}
       <div className="flex gap-px bg-[#EDEDED]">
-        {allSlots.map((slotConfig) => {
-          const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
-          if (!slotItem && slotConfig.optional) return null;
-          return (
-            <div
-              key={slotConfig.slot}
-              className="flex-1 aspect-square bg-[#F5F5F5] overflow-hidden"
-              style={{ minWidth: 0 }}
-            >
-              {slotItem?.item?.imageUrl ? (
-                <img
-                  src={slotItem.item.imageUrl}
-                  alt={slotItem.item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              ) : (
-                <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
-                  {slotItem?.item ? (
-                    <span className="text-sm text-[#DEDEDE]">
-                      {slotItem.item.title?.[0]}
+        {allSlots
+          .filter((slotConfig) =>
+            displayItems.some((i: any) => i.slot === slotConfig.slot && i.item)
+          )
+          .map((slotConfig) => {
+            const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
+            return (
+              <div
+                key={slotConfig.slot}
+                className="flex-1 aspect-square bg-[#F5F5F5] overflow-hidden"
+                style={{ minWidth: 0 }}
+              >
+                {slotItem?.item?.imageUrl ? (
+                  <img
+                    src={slotItem.item.imageUrl}
+                    alt={slotItem.item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                    <span className="text-sm text-[#ACABAB]">
+                      {slotItem?.item?.title?.[0]}
                     </span>
-                  ) : (
-                    <span className="text-[#DEDEDE] text-[10px]">
-                      {slotConfig.label[0]}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
       </div>
 
       {/* Info row */}
