@@ -84,7 +84,7 @@ function SlotPickerModal({
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain p-1"
                     />
                   ) : (
                     <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
@@ -224,7 +224,7 @@ function EditOutfitModal({
                           <img
                             src={item.imageUrl}
                             alt={item.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain p-1"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-muted to-accent/30 flex items-center justify-center">
@@ -411,7 +411,7 @@ function OutfitDetailModal({
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain p-1"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-muted to-accent/30 flex items-center justify-center">
@@ -555,7 +555,7 @@ function OutfitCard({
                     <img
                       src={slotItem.item.imageUrl}
                       alt={slotItem.item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-contain p-1"
                     />
                   ) : (
                     <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
