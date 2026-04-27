@@ -535,36 +535,34 @@ function OutfitCard({
       className="border border-[#EDEDED] hover:border-black transition-all duration-200 overflow-hidden cursor-pointer group"
       onClick={onView}
     >
-      {/* Thumbnail strip — consistent square boxes, object-cover fill */}
+      {/* Thumbnail stripe — portrait boxes side by side */}
       {(() => {
         const filledSlots = allSlots.filter((slotConfig) =>
           displayItems.some((i: any) => i.slot === slotConfig.slot && i.item)
         );
         return (
-          <div className="flex bg-[#EDEDED] gap-px overflow-hidden">
-            {filledSlots.map((slotConfig) => {
+          <div className="flex overflow-hidden" style={{ height: "280px" }}>
+            {filledSlots.map((slotConfig, idx) => {
               const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
               return (
                 <div
                   key={slotConfig.slot}
                   className="relative bg-[#F5F5F5] overflow-hidden flex-1"
-                  style={{ paddingBottom: "100%", minWidth: 0 }}
+                  style={{ borderRight: idx < filledSlots.length - 1 ? "1px solid #EDEDED" : "none" }}
                 >
-                  <div className="absolute inset-0">
-                    {slotItem?.item?.imageUrl ? (
-                      <img
-                        src={slotItem.item.imageUrl}
-                        alt={slotItem.item.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
-                        <span className="text-sm text-[#ACABAB]">
-                          {slotItem?.item?.title?.[0]}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {slotItem?.item?.imageUrl ? (
+                    <img
+                      src={slotItem.item.imageUrl}
+                      alt={slotItem.item.title}
+                      className="w-full h-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                      <span className="text-xs text-[#ACABAB] tracking-widest uppercase">
+                        {slotConfig.label}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
