@@ -535,41 +535,29 @@ function OutfitCard({
       className="border border-[#EDEDED] hover:border-black transition-all duration-200 overflow-hidden cursor-pointer group"
       onClick={onView}
     >
-      {/* Thumbnail stripe — portrait boxes side by side, absolute-fill images */}
+      {/* Thumbnail strip — 5 fixed equal boxes for core slots, always shown */}
       {(() => {
-        const filledSlots = allSlots.filter((slotConfig) =>
-          displayItems.some((i: any) => i.slot === slotConfig.slot && i.item)
-        );
+        const coreSlots = allSlots.filter((s) => !s.optional);
         return (
-          <div className="flex overflow-hidden" style={{ height: "300px" }}>
-            {filledSlots.map((slotConfig, idx) => {
+          <div className="flex" style={{ height: "160px" }}>
+            {coreSlots.map((slotConfig, idx) => {
               const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
+              const hasImage = slotItem?.item?.imageUrl;
               return (
                 <div
                   key={slotConfig.slot}
-                  className="relative bg-[#F5F5F5] overflow-hidden flex-1"
-                  style={{ borderRight: idx < filledSlots.length - 1 ? "1px solid #EDEDED" : "none", minWidth: 0 }}
+                  className="flex-1 bg-[#F5F5F5] overflow-hidden relative"
+                  style={{ borderRight: idx < coreSlots.length - 1 ? "1px solid #EDEDED" : "none" }}
                 >
-                  {slotItem?.item?.imageUrl ? (
+                  {hasImage ? (
                     <img
                       src={slotItem.item.imageUrl}
                       alt={slotItem.item.title}
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: "center top",
-                        display: "block",
-                      }}
+                      className="w-full h-full object-cover object-center"
                     />
                   ) : (
-                    <div
-                      style={{ position: "absolute", inset: 0 }}
-                      className="bg-[#F5F5F5] flex items-center justify-center"
-                    >
-                      <span className="text-xs text-[#ACABAB] tracking-widest uppercase">
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-[9px] text-[#DEDEDE] tracking-widest uppercase">
                         {slotConfig.label}
                       </span>
                     </div>
