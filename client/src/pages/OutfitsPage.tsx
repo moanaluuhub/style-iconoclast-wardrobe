@@ -535,37 +535,41 @@ function OutfitCard({
       className="border border-[#EDEDED] hover:border-black transition-all duration-200 overflow-hidden cursor-pointer group"
       onClick={onView}
     >
-      {/* Thumbnail strip — only filled slots */}
-      <div className="flex gap-px bg-[#EDEDED]">
-        {allSlots
-          .filter((slotConfig) =>
-            displayItems.some((i: any) => i.slot === slotConfig.slot && i.item)
-          )
-          .map((slotConfig) => {
-            const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
-            return (
-              <div
-                key={slotConfig.slot}
-                className="flex-1 aspect-square bg-[#F5F5F5] overflow-hidden"
-                style={{ minWidth: 0 }}
-              >
-                {slotItem?.item?.imageUrl ? (
-                  <img
-                    src={slotItem.item.imageUrl}
-                    alt={slotItem.item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
-                    <span className="text-sm text-[#ACABAB]">
-                      {slotItem?.item?.title?.[0]}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-      </div>
+      {/* Thumbnail strip — only filled slots, equal ratio */}
+      {(() => {
+        const filledSlots = allSlots.filter((slotConfig) =>
+          displayItems.some((i: any) => i.slot === slotConfig.slot && i.item)
+        );
+        const count = filledSlots.length || 1;
+        return (
+          <div className="flex gap-px bg-[#EDEDED]" style={{ height: "220px" }}>
+            {filledSlots.map((slotConfig) => {
+              const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
+              return (
+                <div
+                  key={slotConfig.slot}
+                  className="bg-[#F5F5F5] overflow-hidden flex-shrink-0"
+                  style={{ width: `calc(${100 / count}% - ${(count - 1) / count}px)`, height: "100%" }}
+                >
+                  {slotItem?.item?.imageUrl ? (
+                    <img
+                      src={slotItem.item.imageUrl}
+                      alt={slotItem.item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                      <span className="text-sm text-[#ACABAB]">
+                        {slotItem?.item?.title?.[0]}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Info row */}
       <div className="p-4 flex items-center justify-between">
