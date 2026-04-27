@@ -535,35 +535,36 @@ function OutfitCard({
       className="border border-[#EDEDED] hover:border-black transition-all duration-200 overflow-hidden cursor-pointer group"
       onClick={onView}
     >
-      {/* Thumbnail strip — only filled slots, equal ratio */}
+      {/* Thumbnail strip — consistent square boxes, object-cover fill */}
       {(() => {
         const filledSlots = allSlots.filter((slotConfig) =>
           displayItems.some((i: any) => i.slot === slotConfig.slot && i.item)
         );
-        const count = filledSlots.length || 1;
         return (
-          <div className="flex gap-px bg-[#EDEDED]" style={{ height: "220px" }}>
+          <div className="flex bg-[#EDEDED] gap-px overflow-hidden">
             {filledSlots.map((slotConfig) => {
               const slotItem = displayItems.find((i: any) => i.slot === slotConfig.slot);
               return (
                 <div
                   key={slotConfig.slot}
-                  className="bg-[#F5F5F5] overflow-hidden flex-shrink-0"
-                  style={{ width: `calc(${100 / count}% - ${(count - 1) / count}px)`, height: "100%" }}
+                  className="relative bg-[#F5F5F5] overflow-hidden flex-1"
+                  style={{ paddingBottom: "100%", minWidth: 0 }}
                 >
-                  {slotItem?.item?.imageUrl ? (
-                    <img
-                      src={slotItem.item.imageUrl}
-                      alt={slotItem.item.title}
-                      className="w-full h-full object-contain p-1"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
-                      <span className="text-sm text-[#ACABAB]">
-                        {slotItem?.item?.title?.[0]}
-                      </span>
-                    </div>
-                  )}
+                  <div className="absolute inset-0">
+                    {slotItem?.item?.imageUrl ? (
+                      <img
+                        src={slotItem.item.imageUrl}
+                        alt={slotItem.item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#F5F5F5] flex items-center justify-center">
+                        <span className="text-sm text-[#ACABAB]">
+                          {slotItem?.item?.title?.[0]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
