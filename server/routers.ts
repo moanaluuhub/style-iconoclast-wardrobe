@@ -181,164 +181,202 @@ const itemsRouter = router({
       return { url, key };
     }),
 
+
   // ── LLM-powered URL metadata extraction ──────────────────────────────────────
+  // Strategy: many luxury sites block server-side fetching (Cloudflare, bot protection).
+  // Primary approach: LLM infers product details from the URL path itself — brand names,
+  // product names, and categories are almost always encoded in the URL slug.
+  // Fallback: attempt a lightweight HTML fetch to get OG tags when possible.
   extractFromUrl: protectedProcedure
     .input(z.object({ url: z.string().url() }))
     .mutation(async ({ input }) => {
       try {
+        // ── Step 1: Try to fetch HTML (best-effort, many luxury sites block this) ─
         let html = "";
-        try {
-          const response = await fetch(input.url, {
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              Accept: "text/html,application/xhtml+xml",
-            },
-            signal: AbortSignal.timeout(10000),
-          });
-          html = await response.text();
-        } catch {
-          html = "";
+        const fetchHeaders: Record<string, string>[] = [
+          // Googlebot UA — often whitelisted by fashion sites for SEO
+          {
+            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            Accept: "text/html",
+          },
+          // Standard browser UA
+          {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+          },
+        ];
+        for (const headers of fetchHeaders) {
+          if (html.length > 1000) break;
+          try {
+            const res = await fetch(input.url, {
+              headers,
+              signal: AbortSignal.timeout(8000),
+              redirect: "follow",
+            });
+            const text = await res.text();
+            // Discard Cloudflare challenge pages and bot-detection walls
+            const isChallengePage =
+              text.includes("_cf_chl_opt") ||
+              text.includes("cf-browser-verification") ||
+              text.includes("Enable JavaScript and cookies") ||
+              text.includes("window.isBotPage") ||
+              text.length < 800;
+            if (!isChallengePage) {
+              html = text;
+            }
+          } catch {
+            // continue to next attempt
+          }
         }
 
-        // ── Step 1: deterministic OG / meta tag extraction ──────────────────────
+        // ── Step 2: Extract OG / meta tags from HTML (if we got real content) ────
         const getMeta = (name: string): string | null => {
-          // og:X
-          const og = html.match(
-            new RegExp(`<meta[^>]+property=["']og:${name}["'][^>]+content=["']([^"']+)["']`, "i")
-          ) ||
-          html.match(
-            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:${name}["']`, "i")
-          );
-          if (og?.[1]) return og[1].trim();
-          // name=
-          const nm = html.match(
-            new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, "i")
-          ) ||
-          html.match(
-            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${name}["']`, "i")
-          );
-          return nm?.[1]?.trim() ?? null;
+          const patterns = [
+            new RegExp(`<meta[^>]+property=["']og:${name}["'][^>]+content=["']([^"']+)["']`, "i"),
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:${name}["']`, "i"),
+            new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, "i"),
+            new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${name}["']`, "i"),
+          ];
+          for (const re of patterns) {
+            const m = html.match(re);
+            if (m?.[1]) return m[1].trim();
+          }
+          return null;
         };
-
         const ogTitle = getMeta("title");
         const ogImage = getMeta("image");
-        const ogDescription = getMeta("description") ?? getMeta("description");
+        const ogDescription = getMeta("description");
         const ogSiteName = getMeta("site_name");
-        // Try to find price in common meta patterns
         const priceMatch =
           html.match(/"price"\s*:\s*"([\d.,]+)"/i) ||
-          html.match(/content=["']([\d.]+)["'][^>]+property=["']product:price:amount["']/i) ||
-          html.match(/property=["']product:price:amount["'][^>]+content=["']([\d.]+)["']/i) ||
-          html.match(/itemprop=["']price["'][^>]+content=["']([\d.]+)["']/i) ||
-          html.match(/data-price=["']([\d.]+)["']/i);
+          html.match(/property=["']product:price:amount["'][^>]+content=["']([\d.,]+)["']/i) ||
+          html.match(/itemprop=["']price["'][^>]+content=["']([\d.,]+)["']/i);
         const currencyMatch =
-          html.match(/"priceCurrency"\s*:\s*"([A-Z]{3})"/i) ||
           html.match(/property=["']product:price:currency["'][^>]+content=["']([A-Z]{3})["']/i) ||
           html.match(/itemprop=["']priceCurrency["'][^>]+content=["']([A-Z]{3})["']/i);
         const ogPrice = priceMatch?.[1] ? parseFloat(priceMatch[1].replace(",", "")) : null;
         const ogCurrency = currencyMatch?.[1] ?? null;
 
-        // ── Step 2: LLM enrichment for brand, color, category ───────────────────
-        // Build a compact text snippet for the LLM (title + description + first 2000 chars of visible text)
-        const visibleText = html
-          .replace(/<script[\s\S]*?<\/script>/gi, "")
-          .replace(/<style[\s\S]*?<\/style>/gi, "")
-          .replace(/<[^>]+>/g, " ")
+        // ── Step 3: Parse URL path for product clues ─────────────────────────────
+        let urlPath = "";
+        let hostname = "";
+        try {
+          const parsed = new URL(input.url);
+          urlPath = parsed.pathname;
+          hostname = parsed.hostname.replace("www.", "");
+        } catch {
+          urlPath = input.url;
+        }
+        // Convert URL path to readable words (brand/product names are usually in the slug)
+        const urlWords = urlPath
+          .replace(/[/_-]+/g, " ")
+          .replace(/\.(html|aspx|php|htm)$/i, "")
+          .replace(/\d{8,}/g, "") // strip long numeric IDs
           .replace(/\s{2,}/g, " ")
-          .slice(0, 3000);
+          .trim();
 
-        const llmPromptContext = [
-          ogTitle ? `Title: ${ogTitle}` : "",
-          ogDescription ? `Description: ${ogDescription}` : "",
-          ogSiteName ? `Site: ${ogSiteName}` : "",
+        // Build visible text excerpt from HTML if available
+        const visibleText =
+          html.length > 800
+            ? html
+                .replace(/<script[\s\S]*?<\/script>/gi, "")
+                .replace(/<style[\s\S]*?<\/style>/gi, "")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s{2,}/g, " ")
+                .slice(0, 2000)
+            : "";
+
+        // ── Step 4: LLM extraction — URL path is the primary signal ──────────────
+        const contextLines = [
           `URL: ${input.url}`,
-          `Page text excerpt: ${visibleText}`,
+          `Site: ${hostname}`,
+          `URL path words: ${urlWords}`,
+          ogTitle ? `Page title: ${ogTitle}` : "",
+          ogDescription ? `Description: ${ogDescription}` : "",
+          visibleText ? `Page text excerpt: ${visibleText}` : "",
         ]
           .filter(Boolean)
           .join("\n");
 
-        let llmData: {
-          title: string | null;
-          brand: string | null;
-          price: number | null;
-          currency: string | null;
-          color: string | null;
-          category: string | null;
-          imageUrl: string | null;
-          description: string | null;
-          size: string | null;
-        } = {
-          title: ogTitle,
-          brand: ogSiteName,
-          price: ogPrice,
-          currency: ogCurrency,
-          color: null,
-          category: null,
-          imageUrl: ogImage,
-          description: ogDescription,
-          size: null,
-        };
-
-        try {
-          const llmResponse = await invokeLLM({
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a fashion product data extractor. Extract structured product information from the provided context. Return ONLY valid JSON, no markdown.",
-              },
-              {
-                role: "user",
-                content: `Extract product details from this fashion/clothing product page.\n\n${llmPromptContext}\n\nReturn JSON with these exact keys (use null for missing values):\n{\n  "title": "clean product name without brand prefix",\n  "brand": "brand name only",\n  "price": 0.00,\n  "currency": "USD",\n  "color": "main color name",\n  "category": "one of: tops|bottoms|outerwear|shoes|accessories|bags|dresses|suits|activewear|other",\n  "imageUrl": "best product image URL if identifiable",\n  "description": "brief product description max 100 chars",\n  "size": null\n}`,
-              },
-            ],
-            response_format: {
-              type: "json_schema",
-              json_schema: {
-                name: "product_metadata",
-                strict: true,
-                schema: {
-                  type: "object",
-                  properties: {
-                    title: { type: ["string", "null"] },
-                    brand: { type: ["string", "null"] },
-                    price: { type: ["number", "null"] },
-                    currency: { type: ["string", "null"] },
-                    color: { type: ["string", "null"] },
-                    category: { type: ["string", "null"] },
-                    imageUrl: { type: ["string", "null"] },
-                    description: { type: ["string", "null"] },
-                    size: { type: ["string", "null"] },
-                  },
-                  required: ["title", "brand", "price", "currency", "color", "category", "imageUrl", "description", "size"],
-                  additionalProperties: false,
+        const llmResponse = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a luxury fashion product data extractor. " +
+                "Given a product URL and any available context, extract structured product information. " +
+                "The URL path almost always contains the brand name, product name, and category — use these as primary signals. " +
+                "Return ONLY valid JSON, no markdown, no explanation.",
+            },
+            {
+              role: "user",
+              content:
+                `Extract product details from this fashion product URL.\n\n${contextLines}\n\n` +
+                `Return JSON with these exact keys (use null for missing values):\n` +
+                `{\n` +
+                `  "title": "clean product name without brand prefix",\n` +
+                `  "brand": "brand name only — infer from URL slug or site name",\n` +
+                `  "price": null,\n` +
+                `  "currency": "USD",\n` +
+                `  "color": "main color name if identifiable from URL or text, else null",\n` +
+                `  "category": "one of: tops|bottoms|outerwear|shoes|accessories|bags|dresses|suits|activewear|other",\n` +
+                `  "imageUrl": null,\n` +
+                `  "description": "brief product description max 80 chars",\n` +
+                `  "size": null\n` +
+                `}`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "product_metadata",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  title: { type: ["string", "null"] },
+                  brand: { type: ["string", "null"] },
+                  price: { type: ["number", "null"] },
+                  currency: { type: ["string", "null"] },
+                  color: { type: ["string", "null"] },
+                  category: { type: ["string", "null"] },
+                  imageUrl: { type: ["string", "null"] },
+                  description: { type: ["string", "null"] },
+                  size: { type: ["string", "null"] },
                 },
+                required: [
+                  "title", "brand", "price", "currency", "color",
+                  "category", "imageUrl", "description", "size",
+                ],
+                additionalProperties: false,
               },
             },
-          });
-          const content = llmResponse.choices?.[0]?.message?.content;
-          if (content) {
-            const parsed = typeof content === "string" ? JSON.parse(content) : content;
-            // Merge: prefer OG values for title/image/price, use LLM for brand/color/category
-            llmData = {
-              title: ogTitle ?? parsed.title ?? null,
-              brand: parsed.brand ?? ogSiteName ?? null,
-              price: ogPrice ?? (typeof parsed.price === "number" ? parsed.price : null),
-              currency: ogCurrency ?? parsed.currency ?? "USD",
-              color: parsed.color ?? null,
-              category: parsed.category ?? null,
-              imageUrl: ogImage ?? parsed.imageUrl ?? null,
-              description: ogDescription ?? parsed.description ?? null,
-              size: parsed.size ?? null,
-            };
-          }
-        } catch (llmErr) {
-          console.warn("[extractFromUrl] LLM enrichment failed, using OG data only:", llmErr);
-          // llmData already has OG values, continue
+          },
+        });
+
+        const llmContent = llmResponse.choices?.[0]?.message?.content;
+        let llmParsed: Record<string, any> = {};
+        if (llmContent) {
+          llmParsed =
+            typeof llmContent === "string" ? JSON.parse(llmContent) : llmContent;
         }
 
-        return { success: true, data: llmData };
+        // Merge: prefer OG values (from real page HTML) over LLM inference
+        const result = {
+          title: ogTitle ?? llmParsed.title ?? null,
+          brand: llmParsed.brand ?? ogSiteName ?? null,
+          price: ogPrice ?? (typeof llmParsed.price === "number" ? llmParsed.price : null),
+          currency: ogCurrency ?? llmParsed.currency ?? "USD",
+          color: llmParsed.color ?? null,
+          category: llmParsed.category ?? null,
+          imageUrl: ogImage ?? llmParsed.imageUrl ?? null,
+          description: ogDescription ?? llmParsed.description ?? null,
+          size: llmParsed.size ?? null,
+        };
+
+        return { success: true, data: result };
       } catch (err) {
         console.error("[extractFromUrl] Error:", err);
         return { success: false, data: null };
