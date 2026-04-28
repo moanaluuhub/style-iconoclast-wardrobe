@@ -476,18 +476,31 @@ export default function WardrobePage() {
         </div>
       )}
 
-      {/* Outerwear quick-filter chip */}
-      <div className="flex gap-2 mb-3">
+      {/* Category quick-filter chips */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
         <button
-          onClick={() => setCategory(category === "outerwear" ? "all" : "outerwear")}
+          onClick={() => setCategory("all")}
           className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
-            category === "outerwear"
+            category === "all"
               ? "bg-black text-white border-black"
               : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
           }`}
         >
-          Outerwear
+          All
         </button>
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.value}
+            onClick={() => setCategory(category === c.value ? "all" : c.value)}
+            className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
+              category === c.value
+                ? "bg-black text-white border-black"
+                : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
       </div>
       {/* Tag filter chips */}
       {(allTags as string[]).length > 0 && (
