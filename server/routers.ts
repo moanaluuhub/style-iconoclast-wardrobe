@@ -415,7 +415,7 @@ const outfitsRouter = router({
         name: z.string().min(1),
         slots: z.array(
           z.object({
-            slot: z.enum(["head", "top", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]),
+            slot: z.enum(["head", "top", "outerwear", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]),
             itemId: z.number(),
           })
         ),
@@ -444,7 +444,7 @@ const outfitsRouter = router({
         name: z.string().min(1),
         slots: z.array(
           z.object({
-            slot: z.enum(["head", "top", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]),
+            slot: z.enum(["head", "top", "outerwear", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]),
             itemId: z.number(),
           })
         ),

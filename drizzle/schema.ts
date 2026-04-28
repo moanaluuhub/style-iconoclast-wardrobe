@@ -114,7 +114,7 @@ export const outfitItems = mysqlTable("outfit_items", {
   id: int("id").autoincrement().primaryKey(),
   outfitId: int("outfitId").notNull(),
   itemId: int("itemId").notNull(),
-  slot: mysqlEnum("slot", ["head", "top", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]).notNull(),
+  slot: mysqlEnum("slot", ["head", "top", "outerwear", "bottom", "shoes", "accessory", "bag", "jewelry", "other"]).notNull(),
 });
 
 export type OutfitItem = typeof outfitItems.$inferSelect;

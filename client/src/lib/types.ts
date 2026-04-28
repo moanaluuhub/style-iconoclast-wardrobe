@@ -10,7 +10,7 @@ export type Category =
   | "activewear"
   | "other";
 
-export type OutfitSlot = "head" | "top" | "bottom" | "shoes" | "accessory" | "bag" | "jewelry" | "other";
+export type OutfitSlot = "head" | "top" | "outerwear" | "bottom" | "shoes" | "accessory" | "bag" | "jewelry" | "other";
 
 export const CATEGORIES: { value: Category; label: string }[] = [
   { value: "tops", label: "Tops" },
@@ -29,6 +29,7 @@ export const OUTFIT_SLOTS: { slot: OutfitSlot; label: string; icon: string; cate
   { slot: "head", label: "Head", icon: "hat", categories: ["accessories", "other"], optional: false },
   { slot: "top", label: "Top", icon: "shirt", categories: ["tops", "outerwear", "dresses", "suits", "activewear"], optional: false },
   { slot: "bottom", label: "Bottom", icon: "scissors", categories: ["bottoms", "dresses", "suits", "activewear"], optional: false },
+  { slot: "outerwear", label: "Outerwear", icon: "wind", categories: ["outerwear"], optional: true },
   { slot: "shoes", label: "Shoes", icon: "footprints", categories: ["shoes"], optional: false },
   { slot: "accessory", label: "Accessory", icon: "watch", categories: ["accessories"], optional: false },
   { slot: "bag", label: "Bag", icon: "briefcase", categories: ["bags", "accessories"], optional: true },

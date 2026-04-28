@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { OUTFIT_SLOTS, type OutfitSlot } from "@/lib/types";
-import { X, RefreshCw, Loader2, Save, HardHat, Shirt, Scissors, Footprints, Watch, Briefcase, Gem, PlusCircle, type LucideIcon } from "lucide-react";
+import { X, RefreshCw, Loader2, Save, HardHat, Shirt, Scissors, Footprints, Watch, Briefcase, Gem, PlusCircle, Wind, type LucideIcon } from "lucide-react";
 
 // Map icon name strings to neutral lucide components
 const SLOT_ICONS: Record<string, LucideIcon> = {
@@ -18,6 +18,7 @@ const SLOT_ICONS: Record<string, LucideIcon> = {
   briefcase: Briefcase,
   gem: Gem,
   "plus-circle": PlusCircle,
+  wind: Wind,
 };
 function SlotIcon({ name, size = 14 }: { name: string; size?: number }) {
   const Icon = SLOT_ICONS[name] ?? PlusCircle;
@@ -204,6 +205,7 @@ const EMPTY_SLOTS: SlotState = {
   bottom: null,
   shoes: null,
   accessory: null,
+  outerwear: null,
   bag: null,
   jewelry: null,
   other: null,
