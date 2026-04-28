@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { CATEGORIES, SUGGESTED_TAGS, COLORS } from "@/lib/types";
-import { Loader2, Upload, X, Heart, ArrowRight, Link2, ImageIcon } from "lucide-react";
+import { Loader2, Upload, X, Heart, ArrowRight, Link2 } from "lucide-react";
 
 interface ItemFormData {
   title: string;
@@ -58,7 +58,6 @@ export default function AddEditItemModal({
   const isEdit = !!editItem;
   const [step, setStep] = useState<1 | 2>(isEdit ? 2 : 1);
   const [urlInput, setUrlInput] = useState("");
-  const [imageUrlInput, setImageUrlInput] = useState("");
   const [urlLoading, setUrlLoading] = useState(false);
   const [form, setForm] = useState<ItemFormData>(
     isEdit
@@ -96,7 +95,6 @@ export default function AddEditItemModal({
   const handleClose = () => {
     setStep(isEdit ? 2 : 1);
     setUrlInput("");
-    setImageUrlInput("");
     setForm(DEFAULT_FORM);
     setImageFile(null);
     setImagePreview("");
@@ -121,29 +119,20 @@ export default function AddEditItemModal({
           category: d.category ?? f.category,
           personalNote: d.description ? (f.personalNote || d.description) : f.personalNote,
         }));
-        // Image priority: manual image URL input > extracted image URL
-        const resolvedImage = imageUrlInput.trim() || d.imageUrl || "";
-        if (resolvedImage) {
-          setImagePreview(resolvedImage);
-          setForm((f) => ({ ...f, imageUrl: resolvedImage }));
+        // Set image preview from extracted URL
+        if (d.imageUrl) {
+          setImagePreview(d.imageUrl);
+          setForm((f) => ({ ...f, imageUrl: d.imageUrl! }));
         }
         toast.success("Details extracted — review and save");
       } else {
         toast.info("Could not extract details — please fill in manually.");
         setForm((f) => ({ ...f, buyUrl: urlInput }));
-        if (imageUrlInput.trim()) {
-          setImagePreview(imageUrlInput.trim());
-          setForm((f) => ({ ...f, imageUrl: imageUrlInput.trim() }));
-        }
       }
       setStep(2);
     } catch {
       toast.error("Extraction failed — please fill in manually.");
       setForm((f) => ({ ...f, buyUrl: urlInput }));
-      if (imageUrlInput.trim()) {
-        setImagePreview(imageUrlInput.trim());
-        setForm((f) => ({ ...f, imageUrl: imageUrlInput.trim() }));
-      }
       setStep(2);
     } finally {
       setUrlLoading(false);
@@ -275,42 +264,6 @@ export default function AddEditItemModal({
               </div>
               <p className="text-[11px] text-[#ACABAB] tracking-wide">
                 Paste a product URL — title, brand, price, and color will be extracted automatically.
-              </p>
-            </div>
-
-            {/* Manual image URL */}
-            <div className="space-y-2">
-              <Label className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">
-                Product image{" "}
-                <span className="normal-case tracking-normal text-[#ACABAB] font-normal">(optional)</span>
-              </Label>
-              <div className="relative">
-                <ImageIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Paste product photo URL..."
-                  value={imageUrlInput}
-                  onChange={(e) => setImageUrlInput(e.target.value)}
-                  className="pl-8 text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
-                />
-              </div>
-              {imageUrlInput.trim() && (
-                <div className="relative w-full aspect-[4/5] overflow-hidden bg-[#F5F5F5]">
-                  <img
-                    src={imageUrlInput}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                  <button
-                    onClick={() => setImageUrlInput("")}
-                    className="absolute top-2 right-2 bg-white/90 p-1 hover:bg-white transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-              <p className="text-[11px] text-[#ACABAB] tracking-wide">
-                Most luxury sites block automatic image extraction — paste the photo URL here directly.
               </p>
             </div>
 
