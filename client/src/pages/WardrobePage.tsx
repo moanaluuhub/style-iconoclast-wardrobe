@@ -439,12 +439,44 @@ export default function WardrobePage() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6 p-4 bg-[#F5F5F5] border border-[#DEDEDE]">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Category</span>
-            <span className="text-[11px] text-[#5A5A5A]">
-              {selectedCategories.size === 0 ? "All categories" : `${selectedCategories.size} selected`}
-            </span>
+        <div className="flex flex-col gap-4 mb-6 p-4 bg-[#F5F5F5] border border-[#DEDEDE]">
+          <div className="w-full">
+            <span className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] block mb-2">Category</span>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setSelectedCategories(new Set())}
+                className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
+                  selectedCategories.size === 0
+                    ? "bg-black text-white border-black"
+                    : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+                }`}
+              >
+                All
+              </button>
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => {
+                    setSelectedCategories((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(c.value)) {
+                        next.delete(c.value);
+                      } else {
+                        next.add(c.value);
+                      }
+                      return next;
+                    });
+                  }}
+                  className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
+                    selectedCategories.has(c.value)
+                      ? "bg-black text-white border-black"
+                      : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Color</span>
@@ -471,42 +503,7 @@ export default function WardrobePage() {
         </div>
       )}
 
-      {/* Category quick-filter chips (multi-select) */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        <button
-          onClick={() => setSelectedCategories(new Set())}
-          className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
-            selectedCategories.size === 0
-              ? "bg-black text-white border-black"
-              : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
-          }`}
-        >
-          All
-        </button>
-        {CATEGORIES.map((c) => (
-          <button
-            key={c.value}
-            onClick={() => {
-              setSelectedCategories((prev) => {
-                const next = new Set(prev);
-                if (next.has(c.value)) {
-                  next.delete(c.value);
-                } else {
-                  next.add(c.value);
-                }
-                return next;
-              });
-            }}
-            className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
-              selectedCategories.has(c.value)
-                ? "bg-black text-white border-black"
-                : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+
       {/* Tag filter chips */}
       {(allTags as string[]).length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-6">
