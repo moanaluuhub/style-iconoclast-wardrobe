@@ -139,3 +139,4 @@
 - [x] Wardrobe: floating action bar showing count + "Build outfit" CTA when items are selected
 - [x] CanvasPage: accept pre-selected items via navigation state and auto-fill slots by category
 - [x] Add Outerwear slot to Build your Look (Canvas) — types.ts, CanvasPage, OutfitsPage
+- [x] Add manual image URL paste field to Add Piece modal Step 1
