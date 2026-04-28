@@ -140,3 +140,8 @@
 - [x] CanvasPage: accept pre-selected items via navigation state and auto-fill slots by category
 - [x] Add Outerwear slot to Build your Look (Canvas) — types.ts, CanvasPage, OutfitsPage
 - [x] Add manual image URL paste field to Add Piece modal Step 1
+
+## Enhancement Round 8
+- [x] Season tags (SS/AW/Resort/Pre-Fall) on outfits with filter
+- [x] Occasion/weather free-text note on outfits
+- [x] Outerwear quick-filter chip on Wardrobe page

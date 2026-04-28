@@ -136,8 +136,11 @@ function EditOutfitModal({
   }, [outfit?.id]);
 
   const [name, setName] = useState(outfit?.name ?? "");
+  const [season, setSeason] = useState<string>(outfit?.season ?? "");
+  const [occasion, setOccasion] = useState<string>(outfit?.occasion ?? "");
   const [slots, setSlots] = useState<Record<string, any>>(initialSlots);
   const [pickerSlot, setPickerSlot] = useState<OutfitSlot | null>(null);
+  const SEASONS = ["SS", "AW", "Resort", "Pre-Fall"];
 
   const updateOutfit = trpc.outfits.update.useMutation({
     onSuccess: () => {
@@ -193,6 +196,35 @@ function EditOutfitModal({
               onChange={(e) => setName(e.target.value)}
               className="mt-1 font-serif text-base"
               placeholder="e.g. Monday uniform"
+            />
+          </div>
+          {/* Season chips */}
+          <div className="mt-3">
+            <label className="text-[10px] tracking-widest uppercase text-muted-foreground">Season</label>
+            <div className="flex gap-2 flex-wrap mt-1.5">
+              {SEASONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSeason(season === s ? "" : s)}
+                  className={`text-[10px] tracking-[0.14em] uppercase px-3 py-1 border transition-colors ${
+                    season === s
+                      ? "bg-black text-white border-black"
+                      : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Occasion note */}
+          <div className="mt-3">
+            <label className="text-[10px] tracking-widest uppercase text-muted-foreground">Occasion / weather</label>
+            <Input
+              value={occasion}
+              onChange={(e) => setOccasion(e.target.value)}
+              placeholder="e.g. rainy day, office, weekend..."
+              className="mt-1 text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
             />
           </div>
 
@@ -572,7 +604,17 @@ function OutfitCard({
       {/* Info row */}
       <div className="p-4 flex items-center justify-between">
         <div>
-          <h3 className="text-[13px] font-medium text-black leading-tight">{outfit.name}</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-[13px] font-medium text-black leading-tight">{outfit.name}</h3>
+            {outfit.season && (
+              <span className="text-[9px] tracking-[0.14em] uppercase px-2 py-0.5 border border-black text-black font-medium">
+                {outfit.season}
+              </span>
+            )}
+          </div>
+          {outfit.occasion && (
+            <p className="text-[11px] text-[#5A5A5A] mt-0.5 italic tracking-wide">{outfit.occasion}</p>
+          )}
           <div className="flex items-center gap-3 mt-1">
             <span className="text-[10px] text-[#ACABAB] tracking-wide">
               {displayItems.length} {displayItems.length === 1 ? "piece" : "pieces"}
@@ -645,8 +687,10 @@ export default function OutfitsPage() {
   const [viewOutfit, setViewOutfit] = useState<any | null>(null);
   const [editOutfit, setEditOutfit] = useState<any | null>(null);
   const [wearingId, setWearingId] = useState<number | null>(null);
+  const [seasonFilter, setSeasonFilter] = useState<string>("");
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  const SEASONS = ["SS", "AW", "Resort", "Pre-Fall"];
 
   const { data: outfits = [], isLoading } = trpc.outfits.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -669,6 +713,7 @@ export default function OutfitsPage() {
     onError: (e) => { toast.error(e.message); setWearingId(null); },
   });
 
+  const filteredOutfits = seasonFilter ? outfits.filter((o: any) => o.season === seasonFilter) : outfits;
   if (loading) return null;
   if (!isAuthenticated) {
     return (
@@ -702,6 +747,34 @@ export default function OutfitsPage() {
         </button>
       </div>
 
+      {/* Season filter chips */}
+      {!isLoading && outfits.length > 0 && (
+        <div className="flex gap-2 flex-wrap mb-6">
+          <button
+            onClick={() => setSeasonFilter("")}
+            className={`text-[10px] tracking-[0.14em] uppercase px-3 py-1 border transition-colors ${
+              seasonFilter === ""
+                ? "bg-black text-white border-black"
+                : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+            }`}
+          >
+            All
+          </button>
+          {SEASONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => setSeasonFilter(seasonFilter === s ? "" : s)}
+              className={`text-[10px] tracking-[0.14em] uppercase px-3 py-1 border transition-colors ${
+                seasonFilter === s
+                  ? "bg-black text-white border-black"
+                  : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -723,7 +796,11 @@ export default function OutfitsPage() {
         </div>
       ) : (
         <div className="space-y-4 max-w-2xl">
-          {outfits.map((outfit: any) => (
+          {filteredOutfits.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-[12px] text-[#ACABAB] tracking-wide">No {seasonFilter} outfits yet</p>
+            </div>
+          ) : filteredOutfits.map((outfit: any) => (
             <OutfitCard
               key={outfit.id}
               outfit={outfit}

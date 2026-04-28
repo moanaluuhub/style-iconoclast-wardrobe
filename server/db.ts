@@ -315,15 +315,17 @@ export async function updateOutfit(
   userId: number,
   name: string,
   slots: { slot: string; itemId: number }[],
-  totalPrice?: number
+  totalPrice?: number,
+  season?: string,
+  occasion?: string
 ) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   // Verify ownership
   const existing = await db.select().from(outfits).where(and(eq(outfits.id, id), eq(outfits.userId, userId))).limit(1);
   if (!existing.length) throw new Error("Outfit not found");
-  // Update name/price
-  await db.update(outfits).set({ name, totalPrice: totalPrice ?? null }).where(eq(outfits.id, id));
+  // Update name/price/season/occasion
+  await db.update(outfits).set({ name, totalPrice: totalPrice ?? null, season: season ?? null, occasion: occasion ?? null }).where(eq(outfits.id, id));
   // Replace all outfit items
   await db.delete(outfitItems).where(eq(outfitItems.outfitId, id));
   if (slots.length > 0) {

@@ -458,11 +458,13 @@ const outfitsRouter = router({
           })
         ),
         totalPrice: z.number().optional(),
+        season: z.string().optional(),
+        occasion: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const id = await createOutfit(
-        { userId: ctx.user.id, name: input.name, totalPrice: input.totalPrice },
+        { userId: ctx.user.id, name: input.name, totalPrice: input.totalPrice, season: input.season, occasion: input.occasion },
         input.slots
       );
       return { id };
@@ -487,10 +489,12 @@ const outfitsRouter = router({
           })
         ),
         totalPrice: z.number().optional(),
+        season: z.string().optional(),
+        occasion: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await updateOutfit(input.id, ctx.user.id, input.name, input.slots, input.totalPrice);
+      await updateOutfit(input.id, ctx.user.id, input.name, input.slots, input.totalPrice, input.season, input.occasion);
       return { success: true };
     }),
   wearToday: protectedProcedure

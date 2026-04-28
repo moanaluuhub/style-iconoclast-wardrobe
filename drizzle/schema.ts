@@ -101,6 +101,8 @@ export const outfits = mysqlTable("outfits", {
   userId: int("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   totalPrice: float("totalPrice"),
+  season: varchar("season", { length: 50 }),
+  occasion: varchar("occasion", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

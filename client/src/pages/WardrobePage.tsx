@@ -476,6 +476,19 @@ export default function WardrobePage() {
         </div>
       )}
 
+      {/* Outerwear quick-filter chip */}
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setCategory(category === "outerwear" ? "all" : "outerwear")}
+          className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
+            category === "outerwear"
+              ? "bg-black text-white border-black"
+              : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+          }`}
+        >
+          Outerwear
+        </button>
+      </div>
       {/* Tag filter chips */}
       {(allTags as string[]).length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-6">
