@@ -248,7 +248,7 @@ function SortableItemCard({
 export default function WardrobePage() {
   const { isAuthenticated, loading } = useAuth();
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [color, setColor] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [showFilters, setShowFilters] = useState(false);
@@ -266,11 +266,14 @@ export default function WardrobePage() {
   const utils = trpc.useUtils();
 
   const listInput = useMemo(
-    () => ({ search: search || undefined, category: category !== "all" ? category : undefined, color: color !== "all" ? color : undefined, sortBy }),
-    [search, category, color, sortBy]
+    () => ({ search: search || undefined, color: color !== "all" ? color : undefined, sortBy }),
+    [search, color, sortBy]
   );
 
-  const { data: items = [], isLoading, refetch } = trpc.items.list.useQuery(listInput, { enabled: isAuthenticated });
+  const { data: rawItems = [], isLoading, refetch } = trpc.items.list.useQuery(listInput, { enabled: isAuthenticated });
+  const items = selectedCategories.size > 0
+    ? (rawItems as any[]).filter((item) => selectedCategories.has(item.category))
+    : rawItems;
   const { data: allTags = [] } = trpc.items.tags.useQuery(undefined, { enabled: isAuthenticated });
   const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, { enabled: isAuthenticated });
 
@@ -439,17 +442,9 @@ export default function WardrobePage() {
         <div className="flex flex-wrap gap-4 mb-6 p-4 bg-[#F5F5F5] border border-[#DEDEDE]">
           <div className="flex items-center gap-2">
             <span className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Category</span>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-36 text-[11px] border-[#DEDEDE] rounded-none h-8 focus:ring-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-[#DEDEDE]">
-                <SelectItem value="all" className="text-[11px]">All categories</SelectItem>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value} className="text-[11px]">{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <span className="text-[11px] text-[#5A5A5A]">
+              {selectedCategories.size === 0 ? "All categories" : `${selectedCategories.size} selected`}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A]">Color</span>
@@ -465,9 +460,9 @@ export default function WardrobePage() {
               </SelectContent>
             </Select>
           </div>
-          {(category !== "all" || color !== "all") && (
+          {(selectedCategories.size > 0 || color !== "all") && (
             <button
-              onClick={() => { setCategory("all"); setColor("all"); }}
+              onClick={() => { setSelectedCategories(new Set()); setColor("all"); }}
               className="flex items-center gap-1 text-[10px] tracking-wider uppercase text-[#5A5A5A] hover:text-black transition-colors"
             >
               <X size={11} /> Clear
@@ -476,12 +471,12 @@ export default function WardrobePage() {
         </div>
       )}
 
-      {/* Category quick-filter chips */}
+      {/* Category quick-filter chips (multi-select) */}
       <div className="flex flex-wrap gap-1.5 mb-4">
         <button
-          onClick={() => setCategory("all")}
+          onClick={() => setSelectedCategories(new Set())}
           className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
-            category === "all"
+            selectedCategories.size === 0
               ? "bg-black text-white border-black"
               : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
           }`}
@@ -491,9 +486,19 @@ export default function WardrobePage() {
         {CATEGORIES.map((c) => (
           <button
             key={c.value}
-            onClick={() => setCategory(category === c.value ? "all" : c.value)}
+            onClick={() => {
+              setSelectedCategories((prev) => {
+                const next = new Set(prev);
+                if (next.has(c.value)) {
+                  next.delete(c.value);
+                } else {
+                  next.add(c.value);
+                }
+                return next;
+              });
+            }}
             className={`text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 border transition-colors ${
-              category === c.value
+              selectedCategories.has(c.value)
                 ? "bg-black text-white border-black"
                 : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
             }`}
