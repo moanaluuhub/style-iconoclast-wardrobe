@@ -55,7 +55,7 @@ export default function LoginPage() {
           <img
             src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
             alt="Style Iconoclast"
-            className="w-64 md:w-72 object-contain mb-6"
+            className="w-96 md:w-[27rem] object-contain mb-6"
           />
           <div className="w-10 h-px bg-black mb-8" />
           <p className="text-[13px] text-[#5A5A5A] mb-10 leading-relaxed tracking-wide max-w-xs">
@@ -189,7 +189,7 @@ export default function LoginPage() {
         <img
           src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
           alt="Style Iconoclast"
-          className="h-5 w-auto object-contain mx-auto mb-6 invert"
+          className="h-8 w-auto object-contain mx-auto mb-6 invert"
         />
         <h2 className="text-[28px] md:text-[36px] font-light text-white tracking-[0.08em] uppercase mb-8">
           Begin your archive
