@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import DesignersPage from "@/pages/DesignersPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import TravelPage from "@/pages/TravelPage";
+import SharedTripPage from "@/pages/SharedTripPage";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/stats" component={StatsPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/travel" component={TravelPage} />
+      <Route path="/trip/:token" component={SharedTripPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

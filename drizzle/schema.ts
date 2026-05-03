@@ -162,6 +162,7 @@ export const trips = mysqlTable("trips", {
   endDate: timestamp("endDate").notNull(),
   notes: text("notes"),
   coverImageUrl: text("coverImageUrl"),
+  shareToken: varchar("shareToken", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

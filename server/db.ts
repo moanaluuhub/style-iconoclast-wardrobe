@@ -596,6 +596,20 @@ export async function getTripsWithStats(userId: number) {
     return { ...t, totalDays, outfitCount };
   });
 }
+
+export async function getTripByShareToken(shareToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(trips).where(eq(trips.shareToken, shareToken)).limit(1);
+  return rows[0] ?? null;
+}
+export async function generateShareToken(tripId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  await db.update(trips).set({ shareToken: token }).where(and(eq(trips.id, tripId), eq(trips.userId, userId)));
+  return token;
+}
 export async function createTrip(data: InsertTrip) {
   const db = await getDb();
   if (!db) return null;

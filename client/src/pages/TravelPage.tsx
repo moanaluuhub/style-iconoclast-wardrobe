@@ -144,7 +144,7 @@ function DayCard({
   day: Date;
   dayIndex: number;
   existingDay?: { id: number; outfitId: number | null; weatherTemp: string | null; weatherDesc: string | null; weatherIcon: string | null; notes: string | null };
-  outfits: Array<{ id: number; name: string; season: string | null }>;
+  outfits: Array<{ id: number; name: string; season: string | null; items?: Array<{ item: { imageUrl: string | null } | null }> }>;
 }) {
   const utils = trpc.useUtils();
   const [showPicker, setShowPicker] = useState(false);
@@ -174,10 +174,30 @@ function DayCard({
           )}
         </div>
         {outfit ? (
-          <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-2 mb-2">
-            <Shirt className="w-3.5 h-3.5 text-[#ACABAB]" />
-            <span className="text-[11px] text-black flex-1 truncate">{outfit.name}</span>
-            {outfit.season && <span className="text-[9px] text-[#ACABAB]">{outfit.season}</span>}
+          <div className="mb-2">
+            {/* Outfit thumbnails */}
+            {outfit.items && outfit.items.length > 0 ? (
+              <div className="flex gap-1 mb-1.5">
+                {outfit.items.slice(0, 4).map((oi, idx) => (
+                  oi.item?.imageUrl ? (
+                    <img key={idx} src={oi.item.imageUrl} alt="" className="w-10 h-10 object-cover bg-[#F0F0F0]" />
+                  ) : (
+                    <div key={idx} className="w-10 h-10 bg-[#F0F0F0] flex items-center justify-center">
+                      <Shirt className="w-3 h-3 text-[#DEDEDE]" />
+                    </div>
+                  )
+                ))}
+                {outfit.items.length > 4 && (
+                  <div className="w-10 h-10 bg-[#F0F0F0] flex items-center justify-center">
+                    <span className="text-[9px] text-[#ACABAB]">+{outfit.items.length - 4}</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
+            <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-1.5">
+              <span className="text-[11px] text-black flex-1 truncate">{outfit.name}</span>
+              {outfit.season && <span className="text-[9px] text-[#ACABAB]">{outfit.season}</span>}
+            </div>
           </div>
         ) : (
           <div className="border border-dashed border-[#DEDEDE] px-3 py-2 mb-2 text-center">
@@ -230,6 +250,12 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
   }, [trip?.id]);
   const updateTripMutation = trpc.travel.update.useMutation({
     onSuccess: () => utils.travel.getById.invalidate({ tripId }),
+  });
+  const generateShare = trpc.travel.generateShareLink.useMutation({
+    onSuccess: ({ token }) => {
+      const url = `${window.location.origin}/trip/${token}`;
+      navigator.clipboard.writeText(url).then(() => toast.success("Share link copied!")).catch(() => toast.info(`Share link: ${url}`));
+    },
   });
 
   const addItem = trpc.travel.addPackingItem.useMutation({
@@ -293,12 +319,21 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
             <p className="text-[9px] tracking-[0.3em] uppercase text-[#ACABAB]">Trip</p>
             <h1 className="text-[22px] font-light tracking-wide uppercase text-black">{trip.name}</h1>
           </div>
-          <button
-            onClick={() => setShowCoverInput(v => !v)}
-            className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-2 py-1 transition-colors"
-          >
-            + Cover photo
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCoverInput(v => !v)}
+              className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-2 py-1 transition-colors"
+            >
+              + Cover photo
+            </button>
+            <button
+              onClick={() => generateShare.mutate({ tripId })}
+              disabled={generateShare.isPending}
+              className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-2 py-1 transition-colors disabled:opacity-50"
+            >
+              Share
+            </button>
+          </div>
         </div>
       )}
       {/* Cover photo URL input */}
@@ -374,6 +409,33 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
       {/* Checklist tab */}
       {activeTab === "checklist" && (
         <div className="max-w-md">
+          {/* Packing templates */}
+          {totalCount === 0 && (
+            <div className="mb-4">
+              <p className="text-[9px] tracking-[0.2em] uppercase text-[#ACABAB] mb-2">Quick start with a template</p>
+              <div className="flex flex-wrap gap-2">
+                {(["Weekend city break", "Beach holiday", "Business trip"] as const).map(tpl => {
+                  const items: Record<string, string[]> = {
+                    "Weekend city break": ["Passport / ID", "Phone charger", "2x tops", "1x trousers/jeans", "Shoes", "Jacket", "Toiletries", "Sunglasses"],
+                    "Beach holiday": ["Swimwear", "Sunscreen SPF50+", "Sunglasses", "Beach towel", "Sandals", "Light cover-up", "Hat", "Toiletries", "Phone charger"],
+                    "Business trip": ["Laptop + charger", "Passport / ID", "Business cards", "Suit / blazer", "Dress shirts", "Formal shoes", "Toiletries", "Phone charger"],
+                  };
+                  return (
+                    <button key={tpl}
+                      onClick={async () => {
+                        for (const label of items[tpl]) {
+                          await addItem.mutateAsync({ tripId, label });
+                        }
+                      }}
+                      className="text-[9px] tracking-[0.15em] uppercase border border-[#DEDEDE] hover:border-black px-3 py-1.5 text-[#5A5A5A] hover:text-black transition-colors"
+                    >
+                      {tpl}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {/* Progress */}
           {totalCount > 0 && (
             <div className="mb-4">

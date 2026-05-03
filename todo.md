@@ -155,6 +155,9 @@
 - [x] Travel Planner: tRPC router (trips CRUD, day assignment, weather, checklist)
 - [x] Travel Planner: TravelPage UI with trip list, day planner, weather, checklist
 - [x] Travel Planner: nav link
-- [ ] Travel: auto-fetch weather for all days on trip open
-- [ ] Travel: trip cover photo upload/URL paste as hero on detail page
-- [ ] Travel: outfit count badge on trip cards (X/Y days planned)
+- [x] Travel: auto-fetch weather for all days on trip open
+- [x] Travel: trip cover photo upload/URL paste as hero on detail page
+- [x] Travel: outfit count badge on trip cards (X/Y days planned)
+- [x] Travel: packing list templates (Weekend city break, Beach holiday, Business trip)
+- [x] Travel: outfit photo thumbnail on day cards
+- [x] Travel: shareable read-only trip link

@@ -50,6 +50,8 @@ import {
   addPackingItem,
   togglePackingItem,
   deletePackingItem,
+  getTripByShareToken,
+  generateShareToken,
 } from "./db";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
@@ -904,6 +906,27 @@ const travelRouter = router({
     .mutation(async ({ ctx, input }) => {
       await deletePackingItem(input.itemId, ctx.user.id);
       return { success: true };
+    }),
+  generateShareLink: protectedProcedure
+    .input(z.object({ tripId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const token = await generateShareToken(input.tripId, ctx.user.id);
+      if (!token) throw new TRPCError({ code: "NOT_FOUND" });
+      return { token };
+    }),
+  getShared: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const trip = await getTripByShareToken(input.token);
+      if (!trip) throw new TRPCError({ code: "NOT_FOUND" });
+      return trip;
+    }),
+  getSharedDays: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const trip = await getTripByShareToken(input.token);
+      if (!trip) throw new TRPCError({ code: "NOT_FOUND" });
+      return getTripDays(trip.id, trip.userId);
     }),
 });
 export const appRouter = router({
