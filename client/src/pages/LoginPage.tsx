@@ -52,9 +52,11 @@ export default function LoginPage() {
           <p className="text-[9px] tracking-[0.35em] uppercase text-[#ACABAB] mb-6">
             Private Fashion Archive
           </p>
-          <h1 className="text-[42px] md:text-[52px] font-light text-black leading-[1.05] tracking-[0.06em] uppercase mb-6">
-            Style<br />Iconoclast
-          </h1>
+          <img
+            src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
+            alt="Style Iconoclast"
+            className="w-64 md:w-72 object-contain mb-6"
+          />
           <div className="w-10 h-px bg-black mb-8" />
           <p className="text-[13px] text-[#5A5A5A] mb-10 leading-relaxed tracking-wide max-w-xs">
             A curated space for cataloguing what you own, tracking value over time, and composing outfits with intention.
@@ -184,9 +186,11 @@ export default function LoginPage() {
 
       {/* ── BOTTOM CTA ────────────────────────────────────────────────────── */}
       <section className="bg-black py-20 md:py-28 px-6 text-center">
-        <p className="text-[9px] tracking-[0.35em] uppercase text-white/40 mb-6">
-          Style Iconoclast
-        </p>
+        <img
+          src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
+          alt="Style Iconoclast"
+          className="h-5 w-auto object-contain mx-auto mb-6 invert"
+        />
         <h2 className="text-[28px] md:text-[36px] font-light text-white tracking-[0.08em] uppercase mb-8">
           Begin your archive
         </h2>

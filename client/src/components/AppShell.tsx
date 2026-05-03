@@ -46,12 +46,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
             {/* Center: wordmark */}
             <Link href="/">
-              <span
-                className="text-[17px] font-light tracking-[0.22em] uppercase text-black cursor-pointer select-none"
-                style={{ letterSpacing: "0.22em" }}
-              >
-                STYLE ICONOCLAST
-              </span>
+              <img
+                src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
+                alt="Style Iconoclast"
+                className="h-7 w-auto cursor-pointer select-none object-contain"
+              />
             </Link>
 
             {/* Right: utility icons */}
@@ -174,12 +173,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-[#DEDEDE] py-8 mt-16">
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <span
-              className="text-[11px] tracking-[0.22em] uppercase text-black font-light"
-              style={{ letterSpacing: "0.22em" }}
-            >
-              STYLE ICONOCLAST
-            </span>
+            <img
+              src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
+              alt="Style Iconoclast"
+              className="h-5 w-auto object-contain"
+            />
             <p className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">
               Your private fashion archive
             </p>
