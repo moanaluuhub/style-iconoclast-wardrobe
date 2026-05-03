@@ -136,7 +136,7 @@ function ItemCard({
             <button
               onClick={onCartToggle}
               className={`transition-colors p-1.5 ${inCart ? "bg-black" : "bg-white/90 hover:bg-white"}`}
-              title={inCart ? "Remove from wishlist" : "Add to wishlist"}
+              title={inCart ? "Remove from cart" : "Add to cart"}
             >
               <ShoppingBag size={11} className={inCart ? "text-white" : "text-black"} />
             </button>
@@ -277,8 +277,8 @@ export default function WardrobePage() {
   const { data: allTags = [] } = trpc.items.tags.useQuery(undefined, { enabled: isAuthenticated });
   const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, { enabled: isAuthenticated });
 
-  const addToCart = trpc.cart.add.useMutation({ onSuccess: () => { utils.cart.list.invalidate(); toast.success("Added to wishlist"); }, onError: () => toast.error("Failed to add") });
-  const removeFromCart = trpc.cart.remove.useMutation({ onSuccess: () => { utils.cart.list.invalidate(); toast.success("Removed from wishlist"); }, onError: () => toast.error("Failed to remove") });
+  const addToCart = trpc.cart.add.useMutation({ onSuccess: () => { utils.cart.list.invalidate(); toast.success("Added to cart"); }, onError: () => toast.error("Failed to add") });
+  const removeFromCart = trpc.cart.remove.useMutation({ onSuccess: () => { utils.cart.list.invalidate(); toast.success("Removed from cart"); }, onError: () => toast.error("Failed to remove") });
   const cartItemIds = new Set((cartEntries as any[]).map((c) => c.itemId));
   const cartCount = (cartEntries as any[]).length;
   const toggleSelect = (id: number) => {
@@ -379,7 +379,7 @@ export default function WardrobePage() {
             className="relative flex items-center gap-2 text-[10px] tracking-[0.14em] uppercase text-[#5A5A5A] hover:text-black transition-colors border border-[#DEDEDE] hover:border-black px-3 py-2"
           >
             <ShoppingBag size={13} />
-            Wishlist
+            Cart
             {cartCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[9px] w-4 h-4 flex items-center justify-center font-medium">
                 {cartCount > 9 ? "9+" : cartCount}

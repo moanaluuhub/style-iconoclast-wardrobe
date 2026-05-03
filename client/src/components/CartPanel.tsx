@@ -73,7 +73,7 @@ export default function CartPanel({ open, onClose }: CartPanelProps) {
         <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
           <div className="flex items-center gap-2.5">
             <ShoppingBag size={16} className="text-muted-foreground" />
-            <h2 className="font-serif text-xl">Wishlist</h2>
+            <h2 className="font-serif text-xl">Cart</h2>
             {items.length > 0 && (
               <span className="text-xs text-muted-foreground">
                 ({items.length} {items.length === 1 ? "piece" : "pieces"})
@@ -101,7 +101,7 @@ export default function CartPanel({ open, onClose }: CartPanelProps) {
               <ShoppingBag size={32} className="text-muted-foreground/30" />
               <div>
                 <p className="font-serif text-xl text-muted-foreground/60">
-                  Your wishlist is empty
+                  Your cart is empty
                 </p>
                 <p className="text-xs text-muted-foreground mt-1 italic font-serif">
                   Add pieces from your wardrobe

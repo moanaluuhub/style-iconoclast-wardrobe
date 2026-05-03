@@ -92,7 +92,7 @@ export default function AdminDashboard() {
           <StatCard icon={<Users size={14} />} label="Total Users" value={platformStats.totalUsers} />
           <StatCard icon={<ShoppingBag size={14} />} label="Total Pieces" value={platformStats.totalItems} sub="across all wardrobes" />
           <StatCard icon={<Layers size={14} />} label="Total Outfits" value={platformStats.totalOutfits} sub="saved looks" />
-          <StatCard icon={<Heart size={14} />} label="Wishlist Items" value={platformStats.totalWishlist} sub="across all users" />
+          <StatCard icon={<Heart size={14} />} label="Cart Items" value={platformStats.totalWishlist} sub="across all users" />
         </div>
       ) : null}
 
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
                 <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">Role</th>
                 <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-right">Pieces</th>
                 <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-right">Outfits</th>
-                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-right">Wishlist</th>
+                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-right">Cart</th>
                 <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-right">Wardrobe Value</th>
                 <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-right">Joined</th>
                 <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-center">Actions</th>

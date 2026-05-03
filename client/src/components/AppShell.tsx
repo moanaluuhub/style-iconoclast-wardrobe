@@ -60,7 +60,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <button
                     onClick={() => setCartOpen(true)}
                     className="relative flex items-center gap-1 text-black hover:opacity-60 transition-opacity"
-                    title="Wishlist"
+                    title="Cart"
                   >
                     <ShoppingBag size={18} strokeWidth={1.5} />
                     {cartCount > 0 && (

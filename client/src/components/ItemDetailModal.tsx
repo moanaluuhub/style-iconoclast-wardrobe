@@ -130,14 +130,14 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
   const addToCart = trpc.cart.add.useMutation({
     onSuccess: () => {
       utils.cart.list.invalidate();
-      toast.success("Added to wishlist");
+      toast.success("Added to cart");
     },
   });
 
   const removeFromCart = trpc.cart.remove.useMutation({
     onSuccess: () => {
       utils.cart.list.invalidate();
-      toast.success("Removed from wishlist");
+      toast.success("Removed from cart");
     },
   });
 
@@ -322,7 +322,7 @@ export default function ItemDetailModal({ itemId, open, onClose, onUpdate }: Ite
                   {[
                     { label: "Mark worn", icon: <CheckCircle2 size={11} />, onClick: () => markWorn.mutate({ id: item.id }), disabled: markWorn.isPending },
                     { label: "Share", icon: <Share2 size={11} />, onClick: handleShare, disabled: false },
-                    { label: item.inCart ? "In wishlist" : "Wishlist", icon: <ShoppingBag size={11} fill={item.inCart ? "currentColor" : "none"} />, onClick: () => item.inCart ? removeFromCart.mutate({ itemId: item.id }) : addToCart.mutate({ itemId: item.id }), disabled: addToCart.isPending || removeFromCart.isPending, filled: item.inCart },
+                    { label: item.inCart ? "In cart" : "Cart", icon: <ShoppingBag size={11} fill={item.inCart ? "currentColor" : "none"} />, onClick: () => item.inCart ? removeFromCart.mutate({ itemId: item.id }) : addToCart.mutate({ itemId: item.id }), disabled: addToCart.isPending || removeFromCart.isPending, filled: item.inCart },
                     { label: "Edit", icon: <Edit2 size={11} />, onClick: () => setEditOpen(true), disabled: false },
                     ...(item.buyUrl ? [{ label: "Shop", icon: <ExternalLink size={11} />, onClick: () => window.open(item.buyUrl ?? undefined, "_blank"), disabled: false }] : []),
                   ].map(({ label, icon, onClick, disabled, filled }: any) => (
