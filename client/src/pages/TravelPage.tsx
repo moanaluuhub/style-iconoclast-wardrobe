@@ -497,23 +497,46 @@ function TripCard({
   const isUpcoming = new Date(trip.startDate) > new Date();
 
   return (
-    <div className="border border-[#DEDEDE] hover:border-black transition-colors cursor-pointer group" onClick={onOpen}>
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-[9px] tracking-[0.2em] uppercase text-[#ACABAB]">
-                {isPast ? "Past" : isUpcoming ? "Upcoming" : "Ongoing"}
-              </p>
-            </div>
-            <h3 className="text-[15px] font-light tracking-wide uppercase text-black truncate">{trip.name}</h3>
-          </div>
+    <div className="border border-[#DEDEDE] hover:border-black transition-colors cursor-pointer group overflow-hidden" onClick={onOpen}>
+      {/* Cover image */}
+      {trip.coverImageUrl ? (
+        <div className="relative h-40 overflow-hidden">
+          <img
+            src={trip.coverImageUrl}
+            alt={trip.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {/* Status badge */}
+          <span className="absolute top-2.5 left-3 text-[8px] tracking-[0.2em] uppercase bg-black/50 text-white px-2 py-0.5 backdrop-blur-sm">
+            {isPast ? "Past" : isUpcoming ? "Upcoming" : "Ongoing"}
+          </span>
+          {/* Delete button */}
           <button
             onClick={e => { e.stopPropagation(); onDelete(); }}
-            className="opacity-0 group-hover:opacity-100 text-[#ACABAB] hover:text-black transition-all ml-2 shrink-0"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-black/50 hover:bg-black text-white transition-all p-1 backdrop-blur-sm"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      ) : (
+        <div className="relative h-32 bg-gradient-to-br from-[#F0F0F0] to-[#E4E4E4] flex items-center justify-center overflow-hidden">
+          <MapPin className="w-8 h-8 text-[#DEDEDE]" />
+          {/* Status badge */}
+          <span className="absolute top-2.5 left-3 text-[8px] tracking-[0.2em] uppercase text-[#ACABAB]">
+            {isPast ? "Past" : isUpcoming ? "Upcoming" : "Ongoing"}
+          </span>
+          {/* Delete button */}
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(); }}
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[#ACABAB] hover:text-black transition-all"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+        </div>
+      )}
+      <div className="p-5">
+        <div className="mb-3">
+          <h3 className="text-[15px] font-light tracking-wide uppercase text-black truncate">{trip.name}</h3>
         </div>
         <div className="flex items-center gap-1.5 text-[11px] text-[#5A5A5A] mb-1">
           <MapPin className="w-3 h-3 text-[#ACABAB]" />
