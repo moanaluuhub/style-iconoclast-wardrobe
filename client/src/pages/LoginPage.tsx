@@ -53,7 +53,7 @@ export default function LoginPage() {
             Private Fashion Archive
           </p>
           <img
-            src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
+            src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
             alt="Style Iconoclast"
             className="w-[36rem] md:w-[40rem] object-contain mb-6"
           />
@@ -187,7 +187,7 @@ export default function LoginPage() {
       {/* ── BOTTOM CTA ────────────────────────────────────────────────────── */}
       <section className="bg-black py-20 md:py-28 px-6 text-center">
         <img
-          src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
+          src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
           alt="Style Iconoclast"
           className="h-12 w-auto object-contain mx-auto mb-6 invert"
         />
