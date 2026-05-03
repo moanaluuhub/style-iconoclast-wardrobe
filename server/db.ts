@@ -8,6 +8,9 @@ import {
   InsertOutfit,
   InsertOutfitItem,
   InsertDesignerShop,
+  InsertTrip,
+  InsertTripDay,
+  InsertPackingItem,
   itemTags,
   outfitItems,
   outfits,
@@ -16,6 +19,9 @@ import {
   wardrobeItems,
   cartItems,
   designersShops,
+  trips,
+  tripDays,
+  packingItems,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -570,4 +576,83 @@ export async function setUserRole(userId: number, role: "user" | "admin") {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+// ─── Trips ────────────────────────────────────────────────────────────────────
+export async function getTrips(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(trips).where(eq(trips.userId, userId)).orderBy(desc(trips.startDate));
+}
+export async function createTrip(data: InsertTrip) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(trips).values(data);
+  return result.insertId as number;
+}
+export async function updateTrip(tripId: number, userId: number, data: Partial<InsertTrip>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(trips).set(data).where(and(eq(trips.id, tripId), eq(trips.userId, userId)));
+}
+export async function deleteTrip(tripId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(packingItems).where(and(eq(packingItems.tripId, tripId), eq(packingItems.userId, userId)));
+  await db.delete(tripDays).where(and(eq(tripDays.tripId, tripId), eq(tripDays.userId, userId)));
+  await db.delete(trips).where(and(eq(trips.id, tripId), eq(trips.userId, userId)));
+}
+export async function getTripById(tripId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(trips).where(and(eq(trips.id, tripId), eq(trips.userId, userId))).limit(1);
+  return rows[0] ?? null;
+}
+// ─── Trip Days ────────────────────────────────────────────────────────────────
+export async function getTripDays(tripId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(tripDays).where(and(eq(tripDays.tripId, tripId), eq(tripDays.userId, userId))).orderBy(asc(tripDays.date));
+}
+export async function upsertTripDay(data: InsertTripDay) {
+  const db = await getDb();
+  if (!db) return;
+  // Check if a day record already exists
+  const existing = await db.select({ id: tripDays.id }).from(tripDays)
+    .where(and(eq(tripDays.tripId, data.tripId), eq(tripDays.userId, data.userId), eq(tripDays.date, data.date)))
+    .limit(1);
+  if (existing.length > 0) {
+    await db.update(tripDays).set(data).where(eq(tripDays.id, existing[0].id));
+    return existing[0].id;
+  } else {
+    const [result] = await db.insert(tripDays).values(data);
+    return result.insertId as number;
+  }
+}
+export async function updateTripDay(dayId: number, userId: number, data: Partial<InsertTripDay>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(tripDays).set(data).where(and(eq(tripDays.id, dayId), eq(tripDays.userId, userId)));
+}
+// ─── Packing Items ────────────────────────────────────────────────────────────
+export async function getPackingItems(tripId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(packingItems).where(and(eq(packingItems.tripId, tripId), eq(packingItems.userId, userId))).orderBy(asc(packingItems.sortOrder), asc(packingItems.createdAt));
+}
+export async function addPackingItem(data: InsertPackingItem) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(packingItems).values(data);
+  return result.insertId as number;
+}
+export async function togglePackingItem(itemId: number, userId: number, checked: boolean) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(packingItems).set({ checked }).where(and(eq(packingItems.id, itemId), eq(packingItems.userId, userId)));
+}
+export async function deletePackingItem(itemId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(packingItems).where(and(eq(packingItems.id, itemId), eq(packingItems.userId, userId)));
 }

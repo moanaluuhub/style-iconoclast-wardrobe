@@ -152,3 +152,44 @@ export const designersShops = mysqlTable("designers_shops", {
 
 export type DesignerShop = typeof designersShops.$inferSelect;
 export type InsertDesignerShop = typeof designersShops.$inferInsert;
+// ─── Trips ────────────────────────────────────────────────────────────────────
+export const trips = mysqlTable("trips", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  destination: varchar("destination", { length: 255 }).notNull(),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  notes: text("notes"),
+  coverImageUrl: text("coverImageUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Trip = typeof trips.$inferSelect;
+export type InsertTrip = typeof trips.$inferInsert;
+// ─── Trip Days ────────────────────────────────────────────────────────────────
+export const tripDays = mysqlTable("trip_days", {
+  id: int("id").autoincrement().primaryKey(),
+  tripId: int("tripId").notNull(),
+  userId: int("userId").notNull(),
+  date: timestamp("date").notNull(),
+  outfitId: int("outfitId"),
+  weatherTemp: varchar("weatherTemp", { length: 50 }),
+  weatherDesc: varchar("weatherDesc", { length: 100 }),
+  weatherIcon: varchar("weatherIcon", { length: 50 }),
+  notes: text("notes"),
+});
+export type TripDay = typeof tripDays.$inferSelect;
+export type InsertTripDay = typeof tripDays.$inferInsert;
+// ─── Packing Items ────────────────────────────────────────────────────────────
+export const packingItems = mysqlTable("packing_items", {
+  id: int("id").autoincrement().primaryKey(),
+  tripId: int("tripId").notNull(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 255 }).notNull(),
+  checked: boolean("checked").default(false).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PackingItem = typeof packingItems.$inferSelect;
+export type InsertPackingItem = typeof packingItems.$inferInsert;

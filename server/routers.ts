@@ -37,6 +37,18 @@ import {
   getUserStats,
   getPlatformStats,
   setUserRole,
+  getTrips,
+  createTrip,
+  updateTrip,
+  deleteTrip,
+  getTripById,
+  getTripDays,
+  upsertTripDay,
+  updateTripDay,
+  getPackingItems,
+  addPackingItem,
+  togglePackingItem,
+  deletePackingItem,
 } from "./db";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
@@ -653,6 +665,182 @@ const adminRouter = router({
 
 // ─── App Router ────────────────────────────────────────────────────────────────
 
+// ─── Travel Router ───────────────────────────────────────────────────────────────────
+const travelRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return getTrips(ctx.user.id);
+  }),
+  getById: protectedProcedure
+    .input(z.object({ tripId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      return getTripById(input.tripId, ctx.user.id);
+    }),
+  create: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      destination: z.string().min(1),
+      startDate: z.number(),
+      endDate: z.number(),
+      notes: z.string().optional(),
+      coverImageUrl: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await createTrip({
+        userId: ctx.user.id,
+        name: input.name,
+        destination: input.destination,
+        startDate: new Date(input.startDate),
+        endDate: new Date(input.endDate),
+        notes: input.notes ?? null,
+        coverImageUrl: input.coverImageUrl ?? null,
+      });
+      return { id };
+    }),
+  update: protectedProcedure
+    .input(z.object({
+      tripId: z.number(),
+      name: z.string().min(1).optional(),
+      destination: z.string().optional(),
+      startDate: z.number().optional(),
+      endDate: z.number().optional(),
+      notes: z.string().optional(),
+      coverImageUrl: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { tripId, ...rest } = input;
+      await updateTrip(tripId, ctx.user.id, {
+        ...(rest.name && { name: rest.name }),
+        ...(rest.destination && { destination: rest.destination }),
+        ...(rest.startDate && { startDate: new Date(rest.startDate) }),
+        ...(rest.endDate && { endDate: new Date(rest.endDate) }),
+        ...(rest.notes !== undefined && { notes: rest.notes }),
+        ...(rest.coverImageUrl !== undefined && { coverImageUrl: rest.coverImageUrl }),
+      });
+      return { success: true };
+    }),
+  delete: protectedProcedure
+    .input(z.object({ tripId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteTrip(input.tripId, ctx.user.id);
+      return { success: true };
+    }),
+  getDays: protectedProcedure
+    .input(z.object({ tripId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      return getTripDays(input.tripId, ctx.user.id);
+    }),
+  setDayOutfit: protectedProcedure
+    .input(z.object({
+      tripId: z.number(),
+      date: z.number(),
+      outfitId: z.number().nullable(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await upsertTripDay({
+        tripId: input.tripId,
+        userId: ctx.user.id,
+        date: new Date(input.date),
+        outfitId: input.outfitId,
+        notes: input.notes ?? null,
+        weatherTemp: null,
+        weatherDesc: null,
+        weatherIcon: null,
+      });
+      return { id };
+    }),
+  updateDayWeather: protectedProcedure
+    .input(z.object({
+      dayId: z.number(),
+      weatherTemp: z.string().optional(),
+      weatherDesc: z.string().optional(),
+      weatherIcon: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { dayId, ...rest } = input;
+      await updateTripDay(dayId, ctx.user.id, rest);
+      return { success: true };
+    }),
+  fetchWeather: protectedProcedure
+    .input(z.object({ destination: z.string(), date: z.number() }))
+    .query(async ({ input }) => {
+      try {
+        // Use Open-Meteo geocoding + weather (free, no API key)
+        const geoRes = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input.destination)}&count=1&language=en&format=json`
+        );
+        const geoData = await geoRes.json() as { results?: Array<{ latitude: number; longitude: number; name: string; country: string }> };
+        if (!geoData.results?.length) return null;
+        const { latitude, longitude } = geoData.results[0];
+        const dateStr = new Date(input.date).toISOString().split("T")[0];
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&start_date=${dateStr}&end_date=${dateStr}`
+        );
+        const weatherData = await weatherRes.json() as {
+          daily?: {
+            temperature_2m_max: number[];
+            temperature_2m_min: number[];
+            weathercode: number[];
+          };
+        };
+        if (!weatherData.daily) return null;
+        const max = Math.round(weatherData.daily.temperature_2m_max[0]);
+        const min = Math.round(weatherData.daily.temperature_2m_min[0]);
+        const code = weatherData.daily.weathercode[0];
+        const iconMap: Record<number, string> = {
+          0: "sunny", 1: "mostly-sunny", 2: "partly-cloudy", 3: "cloudy",
+          45: "foggy", 48: "foggy", 51: "drizzle", 53: "drizzle", 55: "drizzle",
+          61: "rainy", 63: "rainy", 65: "heavy-rain", 71: "snowy", 73: "snowy",
+          75: "heavy-snow", 80: "rainy", 81: "rainy", 82: "heavy-rain",
+          95: "stormy", 96: "stormy", 99: "stormy",
+        };
+        const descMap: Record<number, string> = {
+          0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+          45: "Foggy", 48: "Icy fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
+          61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
+          71: "Slight snow", 73: "Moderate snow", 75: "Heavy snow",
+          80: "Rain showers", 81: "Moderate showers", 82: "Violent showers",
+          95: "Thunderstorm", 96: "Thunderstorm w/ hail", 99: "Heavy thunderstorm",
+        };
+        return {
+          temp: `${min}/${max}°C`,
+          desc: descMap[code] ?? "Unknown",
+          icon: iconMap[code] ?? "cloudy",
+        };
+      } catch {
+        return null;
+      }
+    }),
+  getPackingItems: protectedProcedure
+    .input(z.object({ tripId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      return getPackingItems(input.tripId, ctx.user.id);
+    }),
+  addPackingItem: protectedProcedure
+    .input(z.object({ tripId: z.number(), label: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await addPackingItem({
+        tripId: input.tripId,
+        userId: ctx.user.id,
+        label: input.label,
+        checked: false,
+        sortOrder: 0,
+      });
+      return { id };
+    }),
+  togglePackingItem: protectedProcedure
+    .input(z.object({ itemId: z.number(), checked: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await togglePackingItem(input.itemId, ctx.user.id, input.checked);
+      return { success: true };
+    }),
+  deletePackingItem: protectedProcedure
+    .input(z.object({ itemId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await deletePackingItem(input.itemId, ctx.user.id);
+      return { success: true };
+    }),
+});
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -670,6 +858,7 @@ export const appRouter = router({
   stats: statsRouter,
   designers: designersRouter,
   admin: adminRouter,
+  travel: travelRouter,
 });
 
 export type AppRouter = typeof appRouter;
