@@ -49,7 +49,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <img
                 src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
                 alt="Style Iconoclast"
-                className="h-10 w-auto cursor-pointer select-none object-contain"
+                className="h-[3.75rem] w-auto cursor-pointer select-none object-contain"
               />
             </Link>
 
@@ -176,7 +176,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <img
               src="/manus-storage/style-iconoclast-logo_2d36d5c2.webp"
               alt="Style Iconoclast"
-              className="h-8 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
             <p className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">
               Your private fashion archive
