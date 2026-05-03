@@ -526,3 +526,48 @@ export async function getStats(userId: number) {
     newest,
   };
 }
+
+// ─── Admin Helpers ─────────────────────────────────────────────────────────────
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function getUserStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { itemCount: 0, outfitCount: 0, wishlistCount: 0, totalValue: 0 };
+  const items = await db.select().from(wardrobeItems).where(eq(wardrobeItems.userId, userId));
+  const outfitRows = await db.select().from(outfits).where(eq(outfits.userId, userId));
+  const cartRows = await db.select().from(cartItems).where(eq(cartItems.userId, userId));
+  const totalValue = items.reduce((sum, i) => sum + (i.currentPrice ?? i.purchasePrice ?? 0), 0);
+  return {
+    itemCount: items.length,
+    outfitCount: outfitRows.length,
+    wishlistCount: cartRows.length,
+    totalValue: Math.round(totalValue * 100) / 100,
+  };
+}
+
+export async function getPlatformStats() {
+  const db = await getDb();
+  if (!db) return { totalUsers: 0, totalItems: 0, totalOutfits: 0, totalWishlist: 0 };
+  const [userRows, itemRows, outfitRows, cartRows] = await Promise.all([
+    db.select({ id: users.id }).from(users),
+    db.select({ id: wardrobeItems.id }).from(wardrobeItems),
+    db.select({ id: outfits.id }).from(outfits),
+    db.select({ id: cartItems.id }).from(cartItems),
+  ]);
+  return {
+    totalUsers: userRows.length,
+    totalItems: itemRows.length,
+    totalOutfits: outfitRows.length,
+    totalWishlist: cartRows.length,
+  };
+}
+
+export async function setUserRole(userId: number, role: "user" | "admin") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}

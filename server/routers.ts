@@ -33,7 +33,12 @@ import {
   createDesignerShop,
   updateDesignerShop,
   deleteDesignerShop,
+  getAllUsers,
+  getUserStats,
+  getPlatformStats,
+  setUserRole,
 } from "./db";
+import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 
 // ─── Items Router ──────────────────────────────────────────────────────────────
@@ -616,6 +621,36 @@ const statsRouter = router({
   }),
 });
 
+// ─── Admin Router ────────────────────────────────────────────────────────────────
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin" && ctx.user.openId !== ENV.ownerOpenId) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+  return next({ ctx });
+});
+
+const adminRouter = router({
+  platformStats: adminProcedure.query(async () => {
+    return getPlatformStats();
+  }),
+  users: adminProcedure.query(async () => {
+    const allUsers = await getAllUsers();
+    const withStats = await Promise.all(
+      allUsers.map(async (u) => {
+        const stats = await getUserStats(u.id);
+        return { ...u, ...stats };
+      })
+    );
+    return withStats;
+  }),
+  setRole: adminProcedure
+    .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
+    .mutation(async ({ input }) => {
+      await setUserRole(input.userId, input.role);
+      return { success: true };
+    }),
+});
+
 // ─── App Router ────────────────────────────────────────────────────────────────
 
 export const appRouter = router({
@@ -634,6 +669,7 @@ export const appRouter = router({
   cart: cartRouter,
   stats: statsRouter,
   designers: designersRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

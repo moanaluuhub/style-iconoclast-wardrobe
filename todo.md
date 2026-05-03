@@ -145,3 +145,7 @@
 - [x] Season tags (SS/AW/Resort/Pre-Fall) on outfits with filter
 - [x] Occasion/weather free-text note on outfits
 - [x] Outerwear quick-filter chip on Wardrobe page
+- [x] Admin dashboard — platform stats (total users, items, outfits, wishlist)
+- [x] Admin dashboard — user list with per-user stats
+- [x] Admin dashboard — promote/demote user role
+- [x] Admin dashboard — route /admin protected to admin/owner only

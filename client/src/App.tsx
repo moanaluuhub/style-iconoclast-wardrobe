@@ -10,7 +10,8 @@ import CanvasPage from "./pages/CanvasPage";
 import OutfitsPage from "./pages/OutfitsPage";
 import StatsPage from "./pages/StatsPage";
 import LoginPage from "./pages/LoginPage";
-import DesignersPage from "./pages/DesignersPage";
+import DesignersPage from "@/pages/DesignersPage";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/outfits" component={OutfitsPage} />
       <Route path="/designers" component={DesignersPage} />
       <Route path="/stats" component={StatsPage} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route path="/login" component={LoginPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

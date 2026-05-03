@@ -116,6 +116,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
+              {user?.role === "admin" && (
+                <Link href="/admin">
+                  <button
+                    className={`px-5 py-3 text-[11px] tracking-[0.16em] uppercase font-medium transition-colors duration-150 ${
+                      location === "/admin"
+                        ? "text-amber-400 border-b-2 border-amber-400"
+                        : "text-amber-500/70 hover:text-amber-400"
+                    }`}
+                  >
+                    Admin
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
         </nav>
@@ -139,6 +152,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          {user?.role === "admin" && (
+            <Link href="/admin">
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block w-full text-left px-6 py-4 text-[11px] tracking-[0.16em] uppercase font-medium border-b border-white/10 ${
+                  location === "/admin" ? "text-amber-400" : "text-amber-500/70 hover:text-amber-400"
+                }`}
+              >
+                Admin
+              </button>
+            </Link>
+          )}
         </div>
       )}
 
