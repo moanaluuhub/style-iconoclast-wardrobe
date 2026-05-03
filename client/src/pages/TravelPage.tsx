@@ -541,7 +541,7 @@ function TripCard({
   );
 }
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-export default function TravelPage() {
+export default function TravelPage({ embedded = false, ..._ }: { embedded?: boolean; [key: string]: any }) {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();

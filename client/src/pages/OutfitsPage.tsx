@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import TravelPage from "./TravelPage";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -688,6 +689,7 @@ export default function OutfitsPage() {
   const [editOutfit, setEditOutfit] = useState<any | null>(null);
   const [wearingId, setWearingId] = useState<number | null>(null);
   const [seasonFilter, setSeasonFilter] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"outfits" | "travel">("outfits");
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const SEASONS = ["SS", "AW", "Resort", "Pre-Fall"];
@@ -731,21 +733,36 @@ export default function OutfitsPage() {
 
   return (
     <div className="container py-8">
-      {/* Header */}
-      <div className="flex items-end justify-between mb-8 border-b border-[#EDEDED] pb-6">
-        <div>
-          <h1 className="text-[11px] tracking-[0.22em] uppercase font-medium text-black">Outfits</h1>
-          <p className="text-[12px] text-[#ACABAB] mt-1 tracking-wide">
-            {outfits.length} saved {outfits.length === 1 ? "outfit" : "outfits"}
-          </p>
+      {/* Tab switcher */}
+      <div className="flex items-end justify-between mb-0 border-b border-[#EDEDED]">
+        <div className="flex gap-0">
+          {(["outfits", "travel"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-4 text-[11px] tracking-[0.22em] uppercase font-medium transition-colors border-b-2 ${
+                activeTab === tab
+                  ? "border-black text-black"
+                  : "border-transparent text-[#ACABAB] hover:text-black"
+              }`}
+            >
+              {tab === "outfits" ? `Outfits${outfits.length > 0 ? ` (${outfits.length})` : ""}` : "Travel"}
+            </button>
+          ))}
         </div>
-        <button
-          onClick={() => navigate("/canvas")}
-          className="flex items-center gap-1.5 border border-black text-black text-[10px] tracking-[0.14em] uppercase px-4 py-2 hover:bg-black hover:text-white transition-colors"
-        >
-          <Layers size={12} /> New outfit
-        </button>
+        {activeTab === "outfits" && (
+          <button
+            onClick={() => navigate("/canvas")}
+            className="flex items-center gap-1.5 border border-black text-black text-[10px] tracking-[0.14em] uppercase px-4 py-2 hover:bg-black hover:text-white transition-colors mb-2"
+          >
+            <Layers size={12} /> New outfit
+          </button>
+        )}
       </div>
+      {/* Travel tab */}
+      {activeTab === "travel" && <TravelPage embedded />}
+      {/* Outfits tab */}
+      {activeTab === "outfits" && (<div className="pt-6">
 
       {/* Season filter chips */}
       {!isLoading && outfits.length > 0 && (
@@ -815,6 +832,7 @@ export default function OutfitsPage() {
         </div>
       )}
 
+      </div>)}{/* end outfits tab */}
       {/* Outfit detail modal */}
       {viewOutfit && (
         <OutfitDetailModal
