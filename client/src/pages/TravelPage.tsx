@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -212,6 +212,25 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
   const { data: packingList } = trpc.travel.getPackingItems.useQuery({ tripId });
   const [newItem, setNewItem] = useState("");
   const [activeTab, setActiveTab] = useState<"outfits" | "checklist">("outfits");
+  const [coverUrlInput, setCoverUrlInput] = useState("");
+  const [showCoverInput, setShowCoverInput] = useState(false);
+  const fetchWeatherBulk = trpc.travel.fetchWeatherBulk.useMutation({
+    onSuccess: () => utils.travel.getDays.invalidate({ tripId }),
+  });
+  // Auto-fetch weather when trip opens
+  useEffect(() => {
+    if (!trip) return;
+    fetchWeatherBulk.mutate({
+      tripId,
+      destination: trip.destination,
+      startDate: new Date(trip.startDate).getTime(),
+      endDate: new Date(trip.endDate).getTime(),
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id]);
+  const updateTripMutation = trpc.travel.update.useMutation({
+    onSuccess: () => utils.travel.getById.invalidate({ tripId }),
+  });
 
   const addItem = trpc.travel.addPackingItem.useMutation({
     onSuccess: () => { utils.travel.getPackingItems.invalidate({ tripId }); setNewItem(""); },
@@ -245,16 +264,71 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="text-[#ACABAB] hover:text-black transition-colors">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1">
-          <p className="text-[9px] tracking-[0.3em] uppercase text-[#ACABAB]">Trip</p>
-          <h1 className="text-[22px] font-light tracking-wide uppercase text-black">{trip.name}</h1>
+      {/* Cover photo hero */}
+      {trip.coverImageUrl ? (
+        <div className="relative w-full h-52 mb-6 overflow-hidden group">
+          <img src={trip.coverImageUrl} alt={trip.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/40 flex items-end p-4">
+            <div className="flex-1">
+              <button onClick={onBack} className="text-white/70 hover:text-white transition-colors mb-2 flex items-center gap-1">
+                <ChevronLeft className="w-4 h-4" />
+                <span className="text-[9px] tracking-[0.2em] uppercase">Back</span>
+              </button>
+              <h1 className="text-[24px] font-light tracking-wide uppercase text-white">{trip.name}</h1>
+            </div>
+            <button
+              onClick={() => setShowCoverInput(v => !v)}
+              className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1"
+            >
+              Change photo
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={onBack} className="text-[#ACABAB] hover:text-black transition-colors">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1">
+            <p className="text-[9px] tracking-[0.3em] uppercase text-[#ACABAB]">Trip</p>
+            <h1 className="text-[22px] font-light tracking-wide uppercase text-black">{trip.name}</h1>
+          </div>
+          <button
+            onClick={() => setShowCoverInput(v => !v)}
+            className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-2 py-1 transition-colors"
+          >
+            + Cover photo
+          </button>
+        </div>
+      )}
+      {/* Cover photo URL input */}
+      {showCoverInput && (
+        <form
+          className="flex gap-2 mb-4"
+          onSubmit={e => {
+            e.preventDefault();
+            if (coverUrlInput.trim()) {
+              updateTripMutation.mutate({ tripId, coverImageUrl: coverUrlInput.trim() });
+              setShowCoverInput(false);
+              setCoverUrlInput("");
+            }
+          }}
+        >
+          <input
+            autoFocus
+            value={coverUrlInput}
+            onChange={e => setCoverUrlInput(e.target.value)}
+            placeholder="Paste image URL for cover photo..."
+            className="flex-1 border border-[#DEDEDE] px-3 py-2 text-[12px] focus:outline-none focus:border-black"
+          />
+          <button type="submit" className="bg-black text-white px-4 py-2 text-[10px] tracking-[0.15em] uppercase hover:bg-[#222] transition-colors">
+            Set
+          </button>
+          <button type="button" onClick={() => setShowCoverInput(false)} className="border border-[#DEDEDE] px-3 py-2 text-[10px] text-[#ACABAB] hover:text-black transition-colors">
+            Cancel
+          </button>
+        </form>
+      )}
       {/* Trip meta */}
       <div className="flex flex-wrap gap-4 mb-6 pb-6 border-b border-[#DEDEDE]">
         <div className="flex items-center gap-1.5 text-[11px] text-[#5A5A5A]">
@@ -351,11 +425,12 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
 function TripCard({
   trip, onOpen, onDelete,
 }: {
-  trip: { id: number; name: string; destination: string; startDate: Date; endDate: Date; notes: string | null };
+  trip: { id: number; name: string; destination: string; startDate: Date; endDate: Date; notes: string | null; coverImageUrl?: string | null; totalDays?: number; outfitCount?: number };
   onOpen: () => void;
   onDelete: () => void;
 }) {
-  const days = daysBetween(new Date(trip.startDate), new Date(trip.endDate)).length;
+  const days = trip.totalDays ?? daysBetween(new Date(trip.startDate), new Date(trip.endDate)).length;
+  const outfitCount = trip.outfitCount ?? 0;
   const isPast = new Date(trip.endDate) < new Date();
   const isUpcoming = new Date(trip.startDate) > new Date();
 
@@ -391,12 +466,19 @@ function TripCard({
         {trip.notes && (
           <p className="text-[10px] text-[#ACABAB] mt-2 italic truncate">{trip.notes}</p>
         )}
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F0F0F0]">
+          <span className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB]">
+            {outfitCount}/{days} days planned
+          </span>
+          <div className="flex-1 h-px bg-[#EBEBEB]">
+            <div className="h-px bg-black transition-all" style={{ width: `${days > 0 ? (outfitCount / days) * 100 : 0}%` }} />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function TravelPage() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();

@@ -149,9 +149,12 @@
 - [x] Admin dashboard — user list with per-user stats
 - [x] Admin dashboard — promote/demote user role
 - [x] Admin dashboard — route /admin protected to admin/owner only
-- [ ] Travel Planner: trips table (name, destination, startDate, endDate, notes, coverImage)
-- [ ] Travel Planner: tripDays table (tripId, date, outfitId, weather, notes)
-- [ ] Travel Planner: packingItems table (tripId, label, checked)
-- [ ] Travel Planner: tRPC router (trips CRUD, day assignment, weather, checklist)
-- [ ] Travel Planner: TravelPage UI with trip list, day planner, weather, checklist
-- [ ] Travel Planner: nav link
+- [x] Travel Planner: trips table (name, destination, startDate, endDate, notes, coverImage)
+- [x] Travel Planner: tripDays table (tripId, date, outfitId, weather, notes)
+- [x] Travel Planner: packingItems table (tripId, label, checked)
+- [x] Travel Planner: tRPC router (trips CRUD, day assignment, weather, checklist)
+- [x] Travel Planner: TravelPage UI with trip list, day planner, weather, checklist
+- [x] Travel Planner: nav link
+- [ ] Travel: auto-fetch weather for all days on trip open
+- [ ] Travel: trip cover photo upload/URL paste as hero on detail page
+- [ ] Travel: outfit count badge on trip cards (X/Y days planned)

@@ -584,6 +584,18 @@ export async function getTrips(userId: number) {
   if (!db) return [];
   return db.select().from(trips).where(eq(trips.userId, userId)).orderBy(desc(trips.startDate));
 }
+export async function getTripsWithStats(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const allTrips = await db.select().from(trips).where(eq(trips.userId, userId)).orderBy(desc(trips.startDate));
+  const allDays = await db.select().from(tripDays).where(eq(tripDays.userId, userId));
+  return allTrips.map(t => {
+    const tDays = allDays.filter(d => d.tripId === t.id);
+    const totalDays = Math.round((t.endDate.getTime() - t.startDate.getTime()) / 86400000) + 1;
+    const outfitCount = tDays.filter(d => d.outfitId !== null).length;
+    return { ...t, totalDays, outfitCount };
+  });
+}
 export async function createTrip(data: InsertTrip) {
   const db = await getDb();
   if (!db) return null;

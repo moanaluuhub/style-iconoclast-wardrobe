@@ -38,6 +38,7 @@ import {
   getPlatformStats,
   setUserRole,
   getTrips,
+  getTripsWithStats,
   createTrip,
   updateTrip,
   deleteTrip,
@@ -668,7 +669,7 @@ const adminRouter = router({
 // ─── Travel Router ───────────────────────────────────────────────────────────────────
 const travelRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    return getTrips(ctx.user.id);
+    return getTripsWithStats(ctx.user.id);
   }),
   getById: protectedProcedure
     .input(z.object({ tripId: z.number() }))
@@ -760,6 +761,70 @@ const travelRouter = router({
       const { dayId, ...rest } = input;
       await updateTripDay(dayId, ctx.user.id, rest);
       return { success: true };
+    }),
+  fetchWeatherBulk: protectedProcedure
+    .input(z.object({ tripId: z.number(), destination: z.string(), startDate: z.number(), endDate: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const geoRes = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input.destination)}&count=1&language=en&format=json`
+        );
+        const geoData = await geoRes.json() as { results?: Array<{ latitude: number; longitude: number }> };
+        if (!geoData.results?.length) return { success: false };
+        const { latitude, longitude } = geoData.results[0];
+        const startStr = new Date(input.startDate).toISOString().split("T")[0];
+        const endStr = new Date(input.endDate).toISOString().split("T")[0];
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&start_date=${startStr}&end_date=${endStr}`
+        );
+        const weatherData = await weatherRes.json() as {
+          daily?: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[]; weathercode: number[] };
+        };
+        if (!weatherData.daily) return { success: false };
+        const iconMap: Record<number, string> = {
+          0: "sunny", 1: "mostly-sunny", 2: "partly-cloudy", 3: "cloudy",
+          45: "foggy", 48: "foggy", 51: "drizzle", 53: "drizzle", 55: "drizzle",
+          61: "rainy", 63: "rainy", 65: "heavy-rain", 71: "snowy", 73: "snowy",
+          75: "heavy-snow", 80: "rainy", 81: "rainy", 82: "heavy-rain",
+          95: "stormy", 96: "stormy", 99: "stormy",
+        };
+        const descMap: Record<number, string> = {
+          0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+          45: "Foggy", 48: "Icy fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
+          61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
+          71: "Slight snow", 73: "Moderate snow", 75: "Heavy snow",
+          80: "Rain showers", 81: "Moderate showers", 82: "Violent showers",
+          95: "Thunderstorm", 96: "Thunderstorm w/ hail", 99: "Heavy thunderstorm",
+        };
+        // Save weather for each day — preserve existing outfitId
+        for (let i = 0; i < weatherData.daily.time.length; i++) {
+          const dateTs = new Date(weatherData.daily.time[i] + "T00:00:00Z").getTime();
+          const max = Math.round(weatherData.daily.temperature_2m_max[i]);
+          const min = Math.round(weatherData.daily.temperature_2m_min[i]);
+          const code = weatherData.daily.weathercode[i];
+          const weatherFields = {
+            weatherTemp: `${min}/${max}\u00b0C`,
+            weatherDesc: descMap[code] ?? "Unknown",
+            weatherIcon: iconMap[code] ?? "cloudy",
+          };
+          // upsertTripDay returns the id whether existing or new
+          const dayId = await upsertTripDay({
+            tripId: input.tripId,
+            userId: ctx.user.id,
+            date: new Date(dateTs),
+            outfitId: null, // will be preserved by updateTripDay below for existing rows
+            notes: null,
+            ...weatherFields,
+          });
+          // Always update only weather fields to avoid overwriting outfitId
+          if (typeof dayId === "number") {
+            await updateTripDay(dayId, ctx.user.id, weatherFields);
+          }
+        }
+        return { success: true, days: weatherData.daily.time.length };
+      } catch {
+        return { success: false };
+      }
     }),
   fetchWeather: protectedProcedure
     .input(z.object({ destination: z.string(), date: z.number() }))
