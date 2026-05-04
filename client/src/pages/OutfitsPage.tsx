@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Trash2, Layers, Share2, Eye, X, Pencil, RefreshCw, Check, Loader2, Shirt } from "lucide-react";
+import { Trash2, Layers, Share2, Eye, X, Pencil, RefreshCw, Check, Loader2, Shirt, Link } from "lucide-react";
 import ItemDetailModal from "@/components/ItemDetailModal";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
@@ -140,6 +140,7 @@ function EditOutfitModal({
   const [name, setName] = useState(outfit?.name ?? "");
   const [season, setSeason] = useState<string>(outfit?.season ?? "");
   const [occasion, setOccasion] = useState<string>(outfit?.occasion ?? "");
+  const [notes, setNotes] = useState<string>(outfit?.notes ?? "");
   const [slots, setSlots] = useState<Record<string, any>>(initialSlots);
   const [pickerSlot, setPickerSlot] = useState<OutfitSlot | null>(null);
   const SEASONS = ["SS", "AW", "Resort", "Pre-Fall"];
@@ -175,6 +176,9 @@ function EditOutfitModal({
       name: name.trim(),
       slots: slotEntries,
       totalPrice: totalPrice || undefined,
+      season: season || undefined,
+      occasion: occasion || undefined,
+      notes: notes.trim() || undefined,
     });
   };
 
@@ -227,6 +231,17 @@ function EditOutfitModal({
               onChange={(e) => setOccasion(e.target.value)}
               placeholder="e.g. rainy day, office, weekend..."
               className="mt-1 text-[12px] rounded-none border-[#DEDEDE] focus-visible:ring-0 focus-visible:border-black h-9"
+            />
+          </div>
+          {/* Notes */}
+          <div className="mt-3">
+            <label className="text-[10px] tracking-widest uppercase text-muted-foreground">Notes (visible on share page)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add a note about this look..."
+              rows={2}
+              className="mt-1 w-full text-[12px] border border-[#DEDEDE] focus:border-black focus:outline-none px-3 py-2 resize-none"
             />
           </div>
 
@@ -371,6 +386,29 @@ function OutfitDetailModal({
   onEdit: () => void;
 }) {
   if (!outfit) return null;
+  const utils = trpc.useUtils();
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const shareOutfit = trpc.outfits.share.useMutation({
+    onSuccess: (data) => {
+      const url = `${window.location.origin}/shared-outfit/${data.token}`;
+      setShareLink(url);
+      navigator.clipboard.writeText(url).catch(() => {});
+      setShareLinkCopied(true);
+      setTimeout(() => setShareLinkCopied(false), 3000);
+      utils.outfits.list.invalidate();
+    },
+    onError: () => toast.error("Could not generate share link"),
+  });
+  const handleShareLink = () => {
+    if (shareLink) {
+      navigator.clipboard.writeText(shareLink).catch(() => {});
+      setShareLinkCopied(true);
+      setTimeout(() => setShareLinkCopied(false), 3000);
+    } else {
+      shareOutfit.mutate({ id: outfit.id });
+    }
+  };
   const filledSlots = OUTFIT_SLOTS.filter((s) =>
     outfit.items?.some((i: any) => i.slot === s.slot)
   );
@@ -500,7 +538,20 @@ function OutfitDetailModal({
             );
           })}
         </div>
-        <div className="flex gap-2 mt-6 pt-4 border-t border-border/40">
+        <div className="flex flex-col gap-2 mt-6 pt-4 border-t border-border/40">
+          {shareLink && (
+            <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-2 text-[11px] text-[#5A5A5A] rounded-none">
+              <Link size={11} className="shrink-0 text-[#ACABAB]" />
+              <span className="flex-1 truncate font-mono">{shareLink}</span>
+              <button
+                onClick={handleShareLink}
+                className="text-[10px] tracking-wide uppercase text-black hover:underline shrink-0"
+              >
+                {shareLinkCopied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -508,6 +559,16 @@ function OutfitDetailModal({
             className="flex-1 gap-1.5 text-xs tracking-wide"
           >
             <Share2 size={13} /> Share look
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShareLink}
+            disabled={shareOutfit.isPending}
+            className="flex-1 gap-1.5 text-xs tracking-wide"
+          >
+            {shareOutfit.isPending ? <Loader2 size={13} className="animate-spin" /> : <Link size={13} />}
+            {shareLinkCopied ? "Link copied!" : shareLink ? "Copy link" : "Share link"}
           </Button>
           <Button
             variant="outline"
@@ -531,6 +592,7 @@ function OutfitDetailModal({
           >
             <Trash2 size={13} /> Remove
           </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

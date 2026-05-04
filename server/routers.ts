@@ -20,6 +20,8 @@ import {
   getOutfitById,
   getOutfitItems,
   createOutfit,
+  generateOutfitShareToken,
+  getSharedOutfit,
   updateOutfit,
   deleteOutfit,
   getStats,
@@ -499,11 +501,12 @@ const outfitsRouter = router({
         totalPrice: z.number().optional(),
         season: z.string().optional(),
         occasion: z.string().optional(),
+        notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const id = await createOutfit(
-        { userId: ctx.user.id, name: input.name, totalPrice: input.totalPrice, season: input.season, occasion: input.occasion },
+        { userId: ctx.user.id, name: input.name, totalPrice: input.totalPrice, season: input.season, occasion: input.occasion, notes: input.notes },
         input.slots
       );
       return { id };
@@ -530,10 +533,11 @@ const outfitsRouter = router({
         totalPrice: z.number().optional(),
         season: z.string().optional(),
         occasion: z.string().optional(),
+        notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await updateOutfit(input.id, ctx.user.id, input.name, input.slots, input.totalPrice, input.season, input.occasion);
+      await updateOutfit(input.id, ctx.user.id, input.name, input.slots, input.totalPrice, input.season, input.occasion, input.notes);
       return { success: true };
     }),
   wearToday: protectedProcedure
@@ -548,6 +552,20 @@ const outfitsRouter = router({
           .map((oi) => markItemWorn(oi.itemId!, ctx.user.id))
       );
       return { count: items.length };
+    }),
+  share: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const token = await generateOutfitShareToken(input.id, ctx.user.id);
+      if (!token) throw new TRPCError({ code: "NOT_FOUND" });
+      return { token };
+    }),
+  getShared: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const outfit = await getSharedOutfit(input.token);
+      if (!outfit) throw new TRPCError({ code: "NOT_FOUND" });
+      return outfit;
     }),
 });
 

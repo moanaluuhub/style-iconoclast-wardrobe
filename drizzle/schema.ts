@@ -104,10 +104,11 @@ export const outfits = mysqlTable("outfits", {
   totalPrice: float("totalPrice"),
   season: varchar("season", { length: 50 }),
   occasion: varchar("occasion", { length: 255 }),
+  notes: text("notes"),
+  shareToken: varchar("shareToken", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
-
 export type Outfit = typeof outfits.$inferSelect;
 export type InsertOutfit = typeof outfits.$inferInsert;
 

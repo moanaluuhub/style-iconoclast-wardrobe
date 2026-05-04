@@ -85,6 +85,13 @@
       "when": 1777929676831,
       "tag": "0011_cooing_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1777930567942,
+      "tag": "0012_dusty_northstar",
+      "breakpoints": true
     }
   ]
 }

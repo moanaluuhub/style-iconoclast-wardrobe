@@ -330,15 +330,16 @@ export async function updateOutfit(
   slots: { slot: string; itemId: number }[],
   totalPrice?: number,
   season?: string,
-  occasion?: string
+  occasion?: string,
+  notes?: string
 ) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   // Verify ownership
   const existing = await db.select().from(outfits).where(and(eq(outfits.id, id), eq(outfits.userId, userId))).limit(1);
   if (!existing.length) throw new Error("Outfit not found");
-  // Update name/price/season/occasion
-  await db.update(outfits).set({ name, totalPrice: totalPrice ?? null, season: season ?? null, occasion: occasion ?? null }).where(eq(outfits.id, id));
+  // Update name/price/season/occasion/notes
+  await db.update(outfits).set({ name, totalPrice: totalPrice ?? null, season: season ?? null, occasion: occasion ?? null, notes: notes ?? null }).where(eq(outfits.id, id));
   // Replace all outfit items
   await db.delete(outfitItems).where(eq(outfitItems.outfitId, id));
   if (slots.length > 0) {
@@ -360,8 +361,39 @@ export async function deleteOutfit(id: number, userId: number) {
     .where(and(eq(outfits.id, id), eq(outfits.userId, userId)));
 }
 
+/// ─── Outfit Sharing ──────────────────────────────────────────────────────────
+export async function generateOutfitShareToken(outfitId: number, userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const token = crypto.randomUUID().replace(/-/g, "");
+  await db
+    .update(outfits)
+    .set({ shareToken: token })
+    .where(and(eq(outfits.id, outfitId), eq(outfits.userId, userId)));
+  return token;
+}
+export async function getSharedOutfit(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(outfits)
+    .where(eq(outfits.shareToken, token))
+    .limit(1);
+  if (!rows.length) return null;
+  const outfit = rows[0];
+  const items = await db
+    .select({
+      id: outfitItems.id,
+      slot: outfitItems.slot,
+      item: wardrobeItems,
+    })
+    .from(outfitItems)
+    .leftJoin(wardrobeItems, eq(outfitItems.itemId, wardrobeItems.id))
+    .where(eq(outfitItems.outfitId, outfit.id));
+  return { ...outfit, items };
+}
 // ─── Cart ─────────────────────────────────────────────────────────────────────
-
 export async function getCartItems(userId: number) {
   const db = await getDb();
   if (!db) return [];

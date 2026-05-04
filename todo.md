@@ -174,3 +174,6 @@
 
 ## Enhancement Round 12
 - [x] Travel: add × clear button to each assigned outfit slot to remove outfit without reassigning
+
+## Enhancement Round 13
+- [x] Outfits: shareable link with public page showing outfit name, season, notes, and item thumbnails with lightbox
