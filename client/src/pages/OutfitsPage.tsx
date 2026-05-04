@@ -387,7 +387,11 @@ function OutfitDetailModal({
 }) {
   if (!outfit) return null;
   const utils = trpc.useUtils();
-  const [shareLink, setShareLink] = useState<string | null>(null);
+  // Pre-populate from existing shareToken so link survives modal close/reopen
+  const existingLink = outfit.shareToken
+    ? `${window.location.origin}/shared-outfit/${outfit.shareToken}`
+    : null;
+  const [shareLink, setShareLink] = useState<string | null>(existingLink);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const shareOutfit = trpc.outfits.share.useMutation({
     onSuccess: (data) => {
