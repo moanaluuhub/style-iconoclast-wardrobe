@@ -196,16 +196,16 @@ function DayCard({
               <div className="flex gap-1 mb-1.5">
                 {outfit.items.slice(0, 4).map((oi, idx) => (
                   oi.item?.imageUrl ? (
-                    <img key={idx} src={oi.item.imageUrl} alt="" className="w-10 h-10 object-cover bg-[#F0F0F0]" />
+                    <img key={idx} src={oi.item.imageUrl} alt="" className="w-20 h-20 object-cover bg-[#F0F0F0]" />
                   ) : (
-                    <div key={idx} className="w-10 h-10 bg-[#F0F0F0] flex items-center justify-center">
-                      <Shirt className="w-3 h-3 text-[#DEDEDE]" />
+                    <div key={idx} className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
+                      <Shirt className="w-5 h-5 text-[#DEDEDE]" />
                     </div>
                   )
                 ))}
                 {outfit.items.length > 4 && (
-                  <div className="w-10 h-10 bg-[#F0F0F0] flex items-center justify-center">
-                    <span className="text-[9px] text-[#ACABAB]">+{outfit.items.length - 4}</span>
+                  <div className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
+                    <span className="text-[11px] text-[#ACABAB]">+{outfit.items.length - 4}</span>
                   </div>
                 )}
               </div>
