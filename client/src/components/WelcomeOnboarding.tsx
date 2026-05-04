@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Shirt, Layers, MapPin, ShoppingBag, BookOpen, ArrowRight, X } from "lucide-react";
+import { Shirt, Layers, MapPin, ShoppingBag, BookOpen, ArrowRight, X, Award } from "lucide-react";
 
 const STORAGE_KEY = "si_onboarding_seen_v1";
 
@@ -25,6 +25,13 @@ const STEPS = [
     title: "My Archive",
     subtitle: "Pieces you already own",
     body: "Add every item from your real wardrobe — clothes, shoes, bags, accessories. Upload a photo, add the brand and price, and your collection is always at your fingertips.",
+    cta: "Next",
+  },
+  {
+    icon: <Award size={40} strokeWidth={1.2} />,
+    title: "Designers Index",
+    subtitle: "Your brand universe, auto-tracked",
+    body: "Every time you add a piece, its brand is automatically added to your Designers index. Browse your houses, add notes, links, and favourites — your personal fashion directory, built as you shop.",
     cta: "Next",
   },
   {
