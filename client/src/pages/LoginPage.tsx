@@ -50,7 +50,7 @@ export default function LoginPage() {
           }}
         >
           <p className="text-[9px] tracking-[0.35em] uppercase text-[#ACABAB] mb-6">
-            Private Fashion Archive
+            Your Digital Wardrobe
           </p>
           <img
             src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
