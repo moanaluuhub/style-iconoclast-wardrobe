@@ -120,13 +120,29 @@ function OutfitPickerModal({
           Clear outfit
         </button>
         <div className="overflow-y-auto flex-1 space-y-2">
-          {outfits?.map(o => (
-            <button key={o.id} onClick={() => { onSelect(o.id); onClose(); }}
-              className="w-full text-left border border-[#DEDEDE] hover:border-black px-4 py-3 transition-colors">
-              <p className="text-[12px] font-medium text-black">{o.name}</p>
-              {o.season && <p className="text-[10px] text-[#ACABAB] mt-0.5">{o.season}</p>}
-            </button>
-          ))}
+          {outfits?.map(o => {
+            const thumbs = (o.items ?? []).map((i: any) => i.item?.imageUrl).filter(Boolean).slice(0, 4);
+            return (
+              <button key={o.id} onClick={() => { onSelect(o.id); onClose(); }}
+                className="w-full text-left border border-[#DEDEDE] hover:border-black px-4 py-3 transition-colors flex items-center gap-3">
+                {/* Thumbnail strip */}
+                <div className="flex gap-0.5 flex-shrink-0">
+                  {thumbs.length > 0 ? thumbs.map((url: string, idx: number) => (
+                    <img key={idx} src={url} alt="" className="w-9 h-9 object-cover bg-[#F5F5F5]" />
+                  )) : (
+                    <div className="w-9 h-9 bg-[#F5F5F5] flex items-center justify-center">
+                      <Shirt className="w-3 h-3 text-[#DEDEDE]" />
+                    </div>
+                  )}
+                </div>
+                {/* Name + season */}
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium text-black truncate">{o.name}</p>
+                  {o.season && <p className="text-[10px] text-[#ACABAB] mt-0.5">{o.season}</p>}
+                </div>
+              </button>
+            );
+          })}
           {!outfits?.length && (
             <p className="text-[11px] text-[#ACABAB] text-center py-8">No outfits yet. Build some looks first.</p>
           )}
