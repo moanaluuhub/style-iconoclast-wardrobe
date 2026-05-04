@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useParams } from "wouter";
-import { MapPin, Calendar, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Shirt } from "lucide-react";
+import { MapPin, Calendar, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Shirt, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 function formatDate(ts: number | Date) {
   return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -24,10 +24,102 @@ function WeatherIcon({ icon, className = "w-4 h-4" }: { icon: string; className?
   return <Cloud className={className + " text-gray-400"} />;
 }
 
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+interface LightboxImage { url: string; outfitName: string | null; dayLabel: string; index: number; total: number; }
+function Lightbox({ images, startIndex, onClose }: { images: LightboxImage[]; startIndex: number; onClose: () => void }) {
+  const [idx, setIdx] = useState(startIndex);
+  const current = images[idx];
+  const prev = useCallback(() => setIdx(i => (i - 1 + images.length) % images.length), [images.length]);
+  const next = useCallback(() => setIdx(i => (i + 1) % images.length), [images.length]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose, prev, next]);
+
+  if (!current) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+      {/* Prev */}
+      {images.length > 1 && (
+        <button
+          onClick={e => { e.stopPropagation(); prev(); }}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors bg-black/30 rounded-full p-2"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Image */}
+      <div className="flex flex-col items-center gap-4 px-16" onClick={e => e.stopPropagation()}>
+        <img
+          src={current.url}
+          alt=""
+          className="max-h-[80vh] max-w-[80vw] object-contain"
+        />
+        <div className="text-center">
+          {current.outfitName && (
+            <p className="text-white text-[13px] tracking-wide">{current.outfitName}</p>
+          )}
+          <p className="text-white/50 text-[11px] tracking-[0.15em] uppercase mt-1">{current.dayLabel}</p>
+          {images.length > 1 && (
+            <p className="text-white/30 text-[10px] mt-1">{idx + 1} / {images.length}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Next */}
+      {images.length > 1 && (
+        <button
+          onClick={e => { e.stopPropagation(); next(); }}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors bg-black/30 rounded-full p-2"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function SharedTripPage() {
   const { token } = useParams<{ token: string }>();
   const { data: trip, isLoading: tripLoading } = trpc.travel.getShared.useQuery({ token: token ?? "" }, { enabled: !!token });
   const { data: days } = trpc.travel.getSharedDays.useQuery({ token: token ?? "" }, { enabled: !!token });
+
+  // Flatten all images across all days for lightbox navigation
+  const allImages = useMemo<LightboxImage[]>(() => {
+    if (!days) return [];
+    const result: LightboxImage[] = [];
+    days.forEach((day, i) => {
+      const outfitImages: string[] = (day as any).outfitImages ?? [];
+      const outfitName: string | null = (day as any).outfitName ?? null;
+      const dayLabel = new Date(day.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      outfitImages.forEach(url => {
+        result.push({ url, outfitName, dayLabel, index: result.length, total: 0 });
+      });
+    });
+    // fill in total
+    return result.map(img => ({ ...img, total: result.length }));
+  }, [days]);
+
+  const [lightboxStart, setLightboxStart] = useState<number | null>(null);
 
   const tripDays = useMemo(() => {
     if (!trip) return [];
@@ -39,6 +131,19 @@ export default function SharedTripPage() {
     const m: Record<string, DayRow> = {};
     days?.forEach(d => { m[new Date(d.date).toDateString()] = d; });
     return m;
+  }, [days]);
+
+  // Build a per-day image offset map so clicking a thumbnail opens the right global index
+  const dayImageOffset = useMemo(() => {
+    if (!days) return {};
+    const offsets: Record<string, number> = {};
+    let offset = 0;
+    days.forEach(day => {
+      offsets[new Date(day.date).toDateString()] = offset;
+      const imgs: string[] = (day as any).outfitImages ?? [];
+      offset += imgs.length;
+    });
+    return offsets;
   }, [days]);
 
   if (tripLoading) {
@@ -61,6 +166,11 @@ export default function SharedTripPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Lightbox */}
+      {lightboxStart !== null && allImages.length > 0 && (
+        <Lightbox images={allImages} startIndex={lightboxStart} onClose={() => setLightboxStart(null)} />
+      )}
+
       {/* Brand header */}
       <div className="border-b border-[#DEDEDE] px-6 py-4 flex items-center justify-between">
         <img
@@ -107,6 +217,7 @@ export default function SharedTripPage() {
             const outfitImages: string[] = (existing as any)?.outfitImages ?? [];
             const outfitName: string | null = (existing as any)?.outfitName ?? null;
             const hasOutfit = !!existing?.outfitId;
+            const offset = dayImageOffset[day.toDateString()] ?? 0;
 
             return (
               <div key={day.toISOString()} className="border border-[#DEDEDE] p-4">
@@ -127,25 +238,28 @@ export default function SharedTripPage() {
                 {/* Outfit content */}
                 {hasOutfit ? (
                   <div>
-                    {/* Item image thumbnails */}
                     {outfitImages.length > 0 ? (
                       <div className="flex gap-1 mb-2 flex-wrap">
                         {outfitImages.slice(0, 4).map((url, idx) => (
-                          <img
+                          <button
                             key={idx}
-                            src={url}
-                            alt=""
-                            className="w-20 h-20 object-cover bg-[#F0F0F0]"
-                          />
+                            onClick={() => setLightboxStart(offset + idx)}
+                            className="w-20 h-20 overflow-hidden bg-[#F0F0F0] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-black"
+                            title="View larger"
+                          >
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                          </button>
                         ))}
                         {outfitImages.length > 4 && (
-                          <div className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
+                          <button
+                            onClick={() => setLightboxStart(offset + 4)}
+                            className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center hover:bg-[#E8E8E8] transition-colors"
+                          >
                             <span className="text-[11px] text-[#ACABAB]">+{outfitImages.length - 4}</span>
-                          </div>
+                          </button>
                         )}
                       </div>
                     ) : (
-                      /* Outfit assigned but no images uploaded — show placeholder row */
                       <div className="flex gap-1 mb-2">
                         {[0, 1, 2].map(idx => (
                           <div key={idx} className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
@@ -154,7 +268,6 @@ export default function SharedTripPage() {
                         ))}
                       </div>
                     )}
-                    {/* Outfit name pill */}
                     <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-2">
                       <Shirt className="w-3.5 h-3.5 text-[#ACABAB] shrink-0" />
                       <span className="text-[11px] text-black truncate">{outfitName ?? "Outfit planned"}</span>
