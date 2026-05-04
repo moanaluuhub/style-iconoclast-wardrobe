@@ -72,16 +72,18 @@ function Lightbox({ images, startIndex, onClose }: { images: LightboxImage[]; st
 
 // ── Outfit mini-grid ──────────────────────────────────────────────────────────
 function OutfitMini({
-  label, images, outfitName, onImageClick,
+  label, defaultLabel, images, outfitName, onImageClick,
 }: {
-  label: string;
+  label: string | null | undefined;
+  defaultLabel: string;
   images: string[];
   outfitName: string | null;
   onImageClick: (imgIdx: number) => void;
 }) {
+  const displayLabel = label || defaultLabel;
   return (
     <div>
-      <p className="text-[8px] tracking-[0.2em] uppercase text-[#ACABAB] mb-1">{label}</p>
+      <p className="text-[8px] tracking-[0.2em] uppercase text-[#ACABAB] mb-1">{displayLabel}</p>
       {images.length > 0 ? (
         <>
           <div className="flex gap-0.5 mb-1 flex-wrap">
@@ -118,18 +120,20 @@ export default function SharedTripPage() {
   const { data: trip, isLoading: tripLoading } = trpc.travel.getShared.useQuery({ token: token ?? "" }, { enabled: !!token });
   const { data: days } = trpc.travel.getSharedDays.useQuery({ token: token ?? "" }, { enabled: !!token });
 
-  // Build a flat list of all lightbox images across all days (outfit1 then outfit2 per day)
+  // Build a flat list of all lightbox images across all days
   const allImages = useMemo<LightboxImage[]>(() => {
     if (!days) return [];
     const result: LightboxImage[] = [];
     days.forEach(day => {
       const dayLabel = new Date(day.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      const label1: string = (day as any).outfitLabel1 || "Day look";
+      const label2: string = (day as any).outfitLabel2 || "Evening look";
       const imgs1: string[] = (day as any).outfitImages ?? [];
       const name1: string | null = (day as any).outfitName ?? null;
-      imgs1.forEach(url => result.push({ url, outfitName: name1, slotLabel: "Day look", dayLabel }));
+      imgs1.forEach(url => result.push({ url, outfitName: name1, slotLabel: label1, dayLabel }));
       const imgs2: string[] = (day as any).outfitImages2 ?? [];
       const name2: string | null = (day as any).outfitName2 ?? null;
-      imgs2.forEach(url => result.push({ url, outfitName: name2, slotLabel: "Evening look", dayLabel }));
+      imgs2.forEach(url => result.push({ url, outfitName: name2, slotLabel: label2, dayLabel }));
     });
     return result;
   }, [days]);
@@ -227,8 +231,10 @@ export default function SharedTripPage() {
             const dateLabel = day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
             const imgs1: string[] = (existing as any)?.outfitImages ?? [];
             const name1: string | null = (existing as any)?.outfitName ?? null;
+            const label1: string | null = (existing as any)?.outfitLabel1 ?? null;
             const imgs2: string[] = (existing as any)?.outfitImages2 ?? [];
             const name2: string | null = (existing as any)?.outfitName2 ?? null;
+            const label2: string | null = (existing as any)?.outfitLabel2 ?? null;
             const key = day.toDateString();
             const off1 = dayOffsets.slot1[key] ?? 0;
             const off2 = dayOffsets.slot2[key] ?? 0;
@@ -252,13 +258,15 @@ export default function SharedTripPage() {
                 {hasAnyOutfit ? (
                   <div className="grid grid-cols-2 gap-2">
                     <OutfitMini
-                      label="Day look"
+                      label={label1}
+                      defaultLabel="Day look"
                       images={imgs1}
                       outfitName={name1}
                       onImageClick={idx => setLightboxStart(off1 + idx)}
                     />
                     <OutfitMini
-                      label="Evening look"
+                      label={label2}
+                      defaultLabel="Evening look"
                       images={imgs2}
                       outfitName={name2}
                       onImageClick={idx => setLightboxStart(off2 + idx)}

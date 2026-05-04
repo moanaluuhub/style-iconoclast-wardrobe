@@ -663,6 +663,8 @@ export async function upsertTripDay(data: InsertTripDay) {
     const merged: Partial<InsertTripDay> = {
       outfitId: data.outfitId !== null ? data.outfitId : existing.outfitId,
       outfitId2: data.outfitId2 !== null ? data.outfitId2 : existing.outfitId2,
+      outfitLabel1: data.outfitLabel1 !== undefined ? data.outfitLabel1 : existing.outfitLabel1,
+      outfitLabel2: data.outfitLabel2 !== undefined ? data.outfitLabel2 : existing.outfitLabel2,
       notes: data.notes !== null ? data.notes : existing.notes,
       weatherTemp: data.weatherTemp !== null ? data.weatherTemp : existing.weatherTemp,
       weatherDesc: data.weatherDesc !== null ? data.weatherDesc : existing.weatherDesc,

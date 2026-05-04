@@ -78,6 +78,13 @@
       "when": 1777929117696,
       "tag": "0010_crazy_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1777929676831,
+      "tag": "0011_cooing_echo",
+      "breakpoints": true
     }
   ]
 }

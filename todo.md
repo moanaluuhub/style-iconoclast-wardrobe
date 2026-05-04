@@ -168,3 +168,6 @@
 
 ## Enhancement Round 10
 - [x] Travel: support 2 outfits per day (outfitId + outfitId2) — schema, db helpers, tRPC, TravelPage UI, SharedTripPage
+
+## Enhancement Round 11
+- [x] Travel: allow renaming "Day look" / "Evening look" labels per day (outfitLabel1, outfitLabel2 in DB)

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -153,19 +153,81 @@ function OutfitPickerModal({
 }
 
 // ─── Day Card ─────────────────────────────────────────────────────────────────
-type ExistingDay = { id: number; outfitId: number | null; outfitId2?: number | null; weatherTemp: string | null; weatherDesc: string | null; weatherIcon: string | null; notes: string | null };
+type ExistingDay = {
+  id: number;
+  outfitId: number | null;
+  outfitId2?: number | null;
+  outfitLabel1?: string | null;
+  outfitLabel2?: string | null;
+  weatherTemp: string | null;
+  weatherDesc: string | null;
+  weatherIcon: string | null;
+  notes: string | null;
+};
 type OutfitEntry = { id: number; name: string; season: string | null; items?: Array<{ item: { imageUrl: string | null } | null }> };
 
-function OutfitSlot({
-  label, outfit, onAssign,
+// ── Inline editable label ──────────────────────────────────────────────────────
+function EditableLabel({
+  value, defaultValue, onSave,
 }: {
-  label: string;
+  value: string | null | undefined;
+  defaultValue: string;
+  onSave: (label: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? defaultValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const commit = () => {
+    const trimmed = draft.trim() || defaultValue;
+    setDraft(trimmed);
+    onSave(trimmed);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setDraft(value ?? defaultValue); setEditing(false); } }}
+        className="text-[8px] tracking-[0.2em] uppercase text-black bg-transparent border-b border-black outline-none w-full mb-1"
+        maxLength={40}
+      />
+    );
+  }
+  return (
+    <button
+      onClick={() => { setDraft(value ?? defaultValue); setEditing(true); }}
+      className="text-[8px] tracking-[0.2em] uppercase text-[#ACABAB] hover:text-black transition-colors mb-1 flex items-center gap-1 group"
+      title="Click to rename"
+    >
+      {value || defaultValue}
+      <svg className="w-2.5 h-2.5 opacity-0 group-hover:opacity-60 transition-opacity" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M8.5 1.5l2 2L3 11H1v-2L8.5 1.5z" />
+      </svg>
+    </button>
+  );
+}
+
+function OutfitSlot({
+  label, defaultLabel, outfit, onAssign, onLabelSave,
+}: {
+  label: string | null | undefined;
+  defaultLabel: string;
   outfit: OutfitEntry | undefined;
   onAssign: () => void;
+  onLabelSave: (label: string) => void;
 }) {
   return (
     <div className="mb-1">
-      <p className="text-[8px] tracking-[0.2em] uppercase text-[#ACABAB] mb-1">{label}</p>
+      <EditableLabel value={label} defaultValue={defaultLabel} onSave={onLabelSave} />
       {outfit ? (
         <div>
           {outfit.items && outfit.items.length > 0 ? (
@@ -223,6 +285,18 @@ function DayCard({
   const outfit1 = outfits.find(o => o.id === existingDay?.outfitId);
   const outfit2 = outfits.find(o => o.id === existingDay?.outfitId2);
   const dateLabel = day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+  const saveLabel = (slot: 1 | 2, label: string) => {
+    setDayOutfit.mutate({
+      tripId,
+      date: day.getTime(),
+      outfitId: existingDay?.outfitId ?? null,
+      outfitId2: existingDay?.outfitId2 ?? null,
+      outfitLabel1: slot === 1 ? label : (existingDay?.outfitLabel1 ?? undefined),
+      outfitLabel2: slot === 2 ? label : (existingDay?.outfitLabel2 ?? undefined),
+    });
+  };
+
   return (
     <>
       <div className="border border-[#DEDEDE] p-4">
@@ -239,8 +313,20 @@ function DayCard({
           )}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <OutfitSlot label="Day look" outfit={outfit1} onAssign={() => setShowPicker(1)} />
-          <OutfitSlot label="Evening look" outfit={outfit2} onAssign={() => setShowPicker(2)} />
+          <OutfitSlot
+            label={existingDay?.outfitLabel1}
+            defaultLabel="Day look"
+            outfit={outfit1}
+            onAssign={() => setShowPicker(1)}
+            onLabelSave={label => saveLabel(1, label)}
+          />
+          <OutfitSlot
+            label={existingDay?.outfitLabel2}
+            defaultLabel="Evening look"
+            outfit={outfit2}
+            onAssign={() => setShowPicker(2)}
+            onLabelSave={label => saveLabel(2, label)}
+          />
         </div>
       </div>
       {showPicker !== null && (

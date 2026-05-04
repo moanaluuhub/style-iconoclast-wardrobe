@@ -757,6 +757,8 @@ const travelRouter = router({
       date: z.number(),
       outfitId: z.number().nullable().optional(),
       outfitId2: z.number().nullable().optional(),
+      outfitLabel1: z.string().max(100).optional(),
+      outfitLabel2: z.string().max(100).optional(),
       notes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -766,6 +768,8 @@ const travelRouter = router({
         date: new Date(input.date),
         outfitId: input.outfitId ?? null,
         outfitId2: input.outfitId2 ?? null,
+        outfitLabel1: input.outfitLabel1 ?? undefined,
+        outfitLabel2: input.outfitLabel2 ?? undefined,
         notes: input.notes ?? null,
         weatherTemp: null,
         weatherDesc: null,
