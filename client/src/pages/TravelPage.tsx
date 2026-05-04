@@ -318,12 +318,21 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
               </button>
               <h1 className="text-[24px] font-light tracking-wide uppercase text-white">{trip.name}</h1>
             </div>
-            <button
-              onClick={() => setShowCoverInput(v => !v)}
-              className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1"
-            >
-              Change photo
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => generateShare.mutate({ tripId })}
+                disabled={generateShare.isPending}
+                className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1 disabled:opacity-50"
+              >
+                Share
+              </button>
+              <button
+                onClick={() => setShowCoverInput(v => !v)}
+                className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1"
+              >
+                Change photo
+              </button>
+            </div>
           </div>
         </div>
       ) : (
