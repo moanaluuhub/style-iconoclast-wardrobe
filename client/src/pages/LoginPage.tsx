@@ -192,7 +192,7 @@ export default function LoginPage() {
           className="h-[8.58rem] w-auto object-contain mx-auto mb-6 invert"
         />
         <h2 className="text-[28px] md:text-[36px] font-light text-white tracking-[0.08em] uppercase mb-8">
-          Begin your archive
+          Start your wardrobe
         </h2>
         <button
           onClick={() => (window.location.href = getLoginUrl())}
