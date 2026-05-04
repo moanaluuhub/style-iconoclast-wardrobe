@@ -318,21 +318,12 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
               </button>
               <h1 className="text-[24px] font-light tracking-wide uppercase text-white">{trip.name}</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => generateShare.mutate({ tripId })}
-                disabled={generateShare.isPending}
-                className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1 disabled:opacity-50"
-              >
-                Share
-              </button>
-              <button
-                onClick={() => setShowCoverInput(v => !v)}
-                className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1"
-              >
-                Change photo
-              </button>
-            </div>
+            <button
+              onClick={() => setShowCoverInput(v => !v)}
+              className="opacity-0 group-hover:opacity-100 text-white/70 hover:text-white transition-all text-[9px] tracking-[0.15em] uppercase border border-white/30 px-2 py-1"
+            >
+              Change photo
+            </button>
           </div>
         </div>
       ) : (
@@ -344,21 +335,12 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
             <p className="text-[9px] tracking-[0.3em] uppercase text-[#ACABAB]">Trip</p>
             <h1 className="text-[22px] font-light tracking-wide uppercase text-black">{trip.name}</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <button
+          <button
               onClick={() => setShowCoverInput(v => !v)}
               className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-2 py-1 transition-colors"
             >
               + Cover photo
             </button>
-            <button
-              onClick={() => generateShare.mutate({ tripId })}
-              disabled={generateShare.isPending}
-              className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-2 py-1 transition-colors disabled:opacity-50"
-            >
-              Share
-            </button>
-          </div>
         </div>
       )}
       {/* Cover photo URL input */}
@@ -390,7 +372,7 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
         </form>
       )}
       {/* Trip meta */}
-      <div className="flex flex-wrap gap-4 mb-6 pb-6 border-b border-[#DEDEDE]">
+      <div className="flex flex-wrap gap-4 mb-6 pb-6 border-b border-[#DEDEDE] items-center">
         <div className="flex items-center gap-1.5 text-[11px] text-[#5A5A5A]">
           <MapPin className="w-3.5 h-3.5 text-[#ACABAB]" />
           {trip.destination}
@@ -406,6 +388,15 @@ function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) 
         {trip.notes && (
           <p className="w-full text-[11px] text-[#5A5A5A] italic">{trip.notes}</p>
         )}
+        <div className="ml-auto">
+          <button
+            onClick={() => generateShare.mutate({ tripId })}
+            disabled={generateShare.isPending}
+            className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black px-3 py-1.5 transition-colors disabled:opacity-50"
+          >
+            {generateShare.isPending ? "Generating..." : "Share trip"}
+          </button>
+        </div>
       </div>
       {/* Tabs */}
       <div className="flex border-b border-[#DEDEDE] mb-6">
