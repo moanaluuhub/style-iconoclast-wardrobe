@@ -264,10 +264,21 @@ export default function WardrobePage() {
   const [dragMode, setDragMode] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [localOrder, setLocalOrder] = useState<any[]>([]);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [wardrobeSection, setWardrobeSection] = useState<"all" | "wishlist" | "archive">("all");
+
+  // Pre-fill search from ?brand= query param (e.g. navigated from Designers page)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const brand = params.get("brand");
+    if (brand) {
+      setSearch(brand);
+      // Clean the URL so the filter can be cleared normally
+      navigate("/wardrobe", { replace: true });
+    }
+  }, []);
 
   const utils = trpc.useUtils();
 
