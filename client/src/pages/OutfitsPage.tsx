@@ -1,3 +1,4 @@
+import { generateOutfitCollage } from "@/lib/outfitCollage";
 import { useState, useMemo } from "react";
 import TravelPage from "./TravelPage";
 import { trpc } from "@/lib/trpc";
@@ -385,13 +386,29 @@ function OutfitDetailModal({
       })
       .filter(Boolean)
       .join("\n")}`;
-    if (navigator.share) {
+    const imageUrls = (outfit.items ?? [])
+      .map((i: any) => i.item?.imageUrl)
+      .filter(Boolean) as string[];
+    const canShare = typeof navigator.share === "function";
+    const canShareFiles = canShare && typeof navigator.canShare === "function" && imageUrls.length > 0;
+    if (canShareFiles) {
+      try {
+        const blob = await generateOutfitCollage(imageUrls, outfit.name);
+        if (blob) {
+          const file = new File([blob], `${outfit.name}.jpg`, { type: "image/jpeg" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ title: outfit.name, text, files: [file] });
+            toast.success("Shared!");
+            return;
+          }
+        }
+      } catch { /* fall through */ }
+    }
+    if (canShare) {
       try {
         await navigator.share({ title: outfit.name, text });
         toast.success("Shared!");
-      } catch {
-        /* cancelled */
-      }
+      } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);
       toast.success("Outfit details copied to clipboard");
@@ -550,13 +567,29 @@ function OutfitCard({
       })
       .filter(Boolean)
       .join("\n")}`;
-    if (navigator.share) {
+    const imageUrls = displayItems
+      .map((i: any) => i.item?.imageUrl)
+      .filter(Boolean) as string[];
+    const canShare = typeof navigator.share === "function";
+    const canShareFiles = canShare && typeof navigator.canShare === "function" && imageUrls.length > 0;
+    if (canShareFiles) {
+      try {
+        const blob = await generateOutfitCollage(imageUrls, outfit.name);
+        if (blob) {
+          const file = new File([blob], `${outfit.name}.jpg`, { type: "image/jpeg" });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ title: outfit.name, text, files: [file] });
+            toast.success("Shared!");
+            return;
+          }
+        }
+      } catch { /* fall through */ }
+    }
+    if (canShare) {
       try {
         await navigator.share({ title: outfit.name, text });
         toast.success("Shared!");
-      } catch {
-        /* cancelled */
-      }
+      } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);
       toast.success("Outfit details copied to clipboard");
