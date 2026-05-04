@@ -71,6 +71,13 @@
       "when": 1777864609198,
       "tag": "0009_neat_nightmare",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1777929117696,
+      "tag": "0010_crazy_meteorite",
+      "breakpoints": true
     }
   ]
 }

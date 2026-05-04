@@ -165,3 +165,6 @@
 ## Enhancement Round 9
 - [x] Travel: shared trip page shows actual outfit item images (not just shirt icon) — fix getSharedDays to join outfit items + wardrobe image URLs
 - [x] Outfit collage footer: use actual Style Iconoclast logo JPEG instead of plain text
+
+## Enhancement Round 10
+- [x] Travel: support 2 outfits per day (outfitId + outfitId2) — schema, db helpers, tRPC, TravelPage UI, SharedTripPage

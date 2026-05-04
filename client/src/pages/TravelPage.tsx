@@ -153,27 +153,76 @@ function OutfitPickerModal({
 }
 
 // ─── Day Card ─────────────────────────────────────────────────────────────────
+type ExistingDay = { id: number; outfitId: number | null; outfitId2?: number | null; weatherTemp: string | null; weatherDesc: string | null; weatherIcon: string | null; notes: string | null };
+type OutfitEntry = { id: number; name: string; season: string | null; items?: Array<{ item: { imageUrl: string | null } | null }> };
+
+function OutfitSlot({
+  label, outfit, onAssign,
+}: {
+  label: string;
+  outfit: OutfitEntry | undefined;
+  onAssign: () => void;
+}) {
+  return (
+    <div className="mb-1">
+      <p className="text-[8px] tracking-[0.2em] uppercase text-[#ACABAB] mb-1">{label}</p>
+      {outfit ? (
+        <div>
+          {outfit.items && outfit.items.length > 0 ? (
+            <div className="flex gap-0.5 mb-1">
+              {outfit.items.slice(0, 3).map((oi, idx) => (
+                oi.item?.imageUrl ? (
+                  <img key={idx} src={oi.item.imageUrl} alt="" className="w-14 h-14 object-cover bg-[#F0F0F0]" />
+                ) : (
+                  <div key={idx} className="w-14 h-14 bg-[#F0F0F0] flex items-center justify-center">
+                    <Shirt className="w-4 h-4 text-[#DEDEDE]" />
+                  </div>
+                )
+              ))}
+              {outfit.items.length > 3 && (
+                <div className="w-14 h-14 bg-[#F0F0F0] flex items-center justify-center">
+                  <span className="text-[9px] text-[#ACABAB]">+{outfit.items.length - 3}</span>
+                </div>
+              )}
+            </div>
+          ) : null}
+          <div className="flex items-center gap-1 bg-[#F8F8F8] px-2 py-1">
+            <span className="text-[10px] text-black flex-1 truncate">{outfit.name}</span>
+            {outfit.season && <span className="text-[8px] text-[#ACABAB]">{outfit.season}</span>}
+          </div>
+        </div>
+      ) : (
+        <div className="border border-dashed border-[#DEDEDE] px-2 py-2 text-center">
+          <p className="text-[9px] text-[#ACABAB]">None</p>
+        </div>
+      )}
+      <button
+        onClick={onAssign}
+        className="w-full mt-1 text-[8px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black py-1 transition-colors"
+      >
+        {outfit ? "Change" : "Assign"}
+      </button>
+    </div>
+  );
+}
+
 function DayCard({
   tripId, day, dayIndex, existingDay, outfits,
 }: {
   tripId: number;
   day: Date;
   dayIndex: number;
-  existingDay?: { id: number; outfitId: number | null; weatherTemp: string | null; weatherDesc: string | null; weatherIcon: string | null; notes: string | null };
-  outfits: Array<{ id: number; name: string; season: string | null; items?: Array<{ item: { imageUrl: string | null } | null }> }>;
+  existingDay?: ExistingDay;
+  outfits: OutfitEntry[];
 }) {
   const utils = trpc.useUtils();
-  const [showPicker, setShowPicker] = useState(false);
+  const [showPicker, setShowPicker] = useState<1 | 2 | null>(null);
   const setDayOutfit = trpc.travel.setDayOutfit.useMutation({
     onSuccess: () => utils.travel.getDays.invalidate({ tripId }),
   });
-  const { data: weather, isLoading: weatherLoading } = trpc.travel.fetchWeather.useQuery(
-    { destination: "", date: day.getTime() },
-    { enabled: false }
-  );
-  const outfit = outfits.find(o => o.id === existingDay?.outfitId);
+  const outfit1 = outfits.find(o => o.id === existingDay?.outfitId);
+  const outfit2 = outfits.find(o => o.id === existingDay?.outfitId2);
   const dateLabel = day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-
   return (
     <>
       <div className="border border-[#DEDEDE] p-4">
@@ -189,56 +238,27 @@ function DayCard({
             </div>
           )}
         </div>
-        {outfit ? (
-          <div className="mb-2">
-            {/* Outfit thumbnails */}
-            {outfit.items && outfit.items.length > 0 ? (
-              <div className="flex gap-1 mb-1.5">
-                {outfit.items.slice(0, 4).map((oi, idx) => (
-                  oi.item?.imageUrl ? (
-                    <img key={idx} src={oi.item.imageUrl} alt="" className="w-20 h-20 object-cover bg-[#F0F0F0]" />
-                  ) : (
-                    <div key={idx} className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
-                      <Shirt className="w-5 h-5 text-[#DEDEDE]" />
-                    </div>
-                  )
-                ))}
-                {outfit.items.length > 4 && (
-                  <div className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
-                    <span className="text-[11px] text-[#ACABAB]">+{outfit.items.length - 4}</span>
-                  </div>
-                )}
-              </div>
-            ) : null}
-            <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-1.5">
-              <span className="text-[11px] text-black flex-1 truncate">{outfit.name}</span>
-              {outfit.season && <span className="text-[9px] text-[#ACABAB]">{outfit.season}</span>}
-            </div>
-          </div>
-        ) : (
-          <div className="border border-dashed border-[#DEDEDE] px-3 py-2 mb-2 text-center">
-            <p className="text-[10px] text-[#ACABAB]">No outfit assigned</p>
-          </div>
-        )}
-        <button
-          onClick={() => setShowPicker(true)}
-          className="w-full text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] hover:text-black border border-[#DEDEDE] hover:border-black py-1.5 transition-colors"
-        >
-          {outfit ? "Change outfit" : "Assign outfit"}
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <OutfitSlot label="Day look" outfit={outfit1} onAssign={() => setShowPicker(1)} />
+          <OutfitSlot label="Evening look" outfit={outfit2} onAssign={() => setShowPicker(2)} />
+        </div>
       </div>
-      {showPicker && (
+      {showPicker !== null && (
         <OutfitPickerModal
           onSelect={(outfitId) => {
-            setDayOutfit.mutate({ tripId, date: day.getTime(), outfitId });
+            if (showPicker === 1) {
+              setDayOutfit.mutate({ tripId, date: day.getTime(), outfitId, outfitId2: existingDay?.outfitId2 ?? null });
+            } else {
+              setDayOutfit.mutate({ tripId, date: day.getTime(), outfitId: existingDay?.outfitId ?? null, outfitId2: outfitId });
+            }
+            setShowPicker(null);
           }}
-          onClose={() => setShowPicker(false)}
+          onClose={() => setShowPicker(null)}
         />
       )}
     </>
   );
 }
-
 // ─── Trip Detail View ─────────────────────────────────────────────────────────
 function TripDetail({ tripId, onBack }: { tripId: number; onBack: () => void }) {
   const utils = trpc.useUtils();

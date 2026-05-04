@@ -651,12 +651,25 @@ export async function upsertTripDay(data: InsertTripDay) {
   const db = await getDb();
   if (!db) return;
   // Check if a day record already exists
-  const existing = await db.select({ id: tripDays.id }).from(tripDays)
+  const existingRows = await db
+    .select()
+    .from(tripDays)
     .where(and(eq(tripDays.tripId, data.tripId), eq(tripDays.userId, data.userId), eq(tripDays.date, data.date)))
     .limit(1);
-  if (existing.length > 0) {
-    await db.update(tripDays).set(data).where(eq(tripDays.id, existing[0].id));
-    return existing[0].id;
+  if (existingRows.length > 0) {
+    const existing = existingRows[0];
+    // Merge: only overwrite fields that are explicitly provided (non-null in data)
+    // This preserves weather, notes, and the other outfit slot when only one slot is being updated
+    const merged: Partial<InsertTripDay> = {
+      outfitId: data.outfitId !== null ? data.outfitId : existing.outfitId,
+      outfitId2: data.outfitId2 !== null ? data.outfitId2 : existing.outfitId2,
+      notes: data.notes !== null ? data.notes : existing.notes,
+      weatherTemp: data.weatherTemp !== null ? data.weatherTemp : existing.weatherTemp,
+      weatherDesc: data.weatherDesc !== null ? data.weatherDesc : existing.weatherDesc,
+      weatherIcon: data.weatherIcon !== null ? data.weatherIcon : existing.weatherIcon,
+    };
+    await db.update(tripDays).set(merged).where(eq(tripDays.id, existing.id));
+    return existing.id;
   } else {
     const [result] = await db.insert(tripDays).values(data);
     return result.insertId as number;
@@ -800,40 +813,43 @@ export async function getOwnerWishlistItems(ownerId: number) {
 }
 
 // ─── Trip Days with Outfit Details (for shared trip view) ─────────────────────
+export async function fetchOutfitDetails(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, outfitId: number | null) {
+  if (!outfitId) return { outfitName: null, outfitImages: [] };
+  const [outfitRow] = await db
+    .select({ id: outfits.id, name: outfits.name })
+    .from(outfits)
+    .where(eq(outfits.id, outfitId))
+    .limit(1);
+  const items = outfitRow
+    ? await db
+        .select({ imageUrl: wardrobeItems.imageUrl, slot: outfitItems.slot })
+        .from(outfitItems)
+        .leftJoin(wardrobeItems, eq(outfitItems.itemId, wardrobeItems.id))
+        .where(eq(outfitItems.outfitId, outfitRow.id))
+    : [];
+  const outfitImages = items.map((i) => i.imageUrl).filter((url): url is string => !!url);
+  return { outfitName: outfitRow?.name ?? null, outfitImages };
+}
 export async function getTripDaysWithOutfits(tripId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
-
-  // Get all days for this trip
   const days = await db
     .select()
     .from(tripDays)
     .where(and(eq(tripDays.tripId, tripId), eq(tripDays.userId, userId)))
     .orderBy(asc(tripDays.date));
-
-  // For each day that has an outfit, fetch the outfit name + item images
   const enriched = await Promise.all(
     days.map(async (day) => {
-      if (!day.outfitId) return { ...day, outfitName: null, outfitImages: [] };
-      const [outfitRow] = await db
-        .select({ id: outfits.id, name: outfits.name })
-        .from(outfits)
-        .where(eq(outfits.id, day.outfitId))
-        .limit(1);
-      const items = outfitRow
-        ? await db
-            .select({ imageUrl: wardrobeItems.imageUrl, slot: outfitItems.slot })
-            .from(outfitItems)
-            .leftJoin(wardrobeItems, eq(outfitItems.itemId, wardrobeItems.id))
-            .where(eq(outfitItems.outfitId, outfitRow.id))
-        : [];
-      const outfitImages = items
-        .map((i) => i.imageUrl)
-        .filter((url): url is string => !!url);
+      const [outfit1, outfit2] = await Promise.all([
+        fetchOutfitDetails(db, day.outfitId ?? null),
+        fetchOutfitDetails(db, day.outfitId2 ?? null),
+      ]);
       return {
         ...day,
-        outfitName: outfitRow?.name ?? null,
-        outfitImages,
+        outfitName: outfit1.outfitName,
+        outfitImages: outfit1.outfitImages,
+        outfitName2: outfit2.outfitName,
+        outfitImages2: outfit2.outfitImages,
       };
     })
   );

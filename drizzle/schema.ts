@@ -176,6 +176,7 @@ export const tripDays = mysqlTable("trip_days", {
   userId: int("userId").notNull(),
   date: timestamp("date").notNull(),
   outfitId: int("outfitId"),
+  outfitId2: int("outfitId2"),
   weatherTemp: varchar("weatherTemp", { length: 50 }),
   weatherDesc: varchar("weatherDesc", { length: 100 }),
   weatherIcon: varchar("weatherIcon", { length: 50 }),

@@ -755,7 +755,8 @@ const travelRouter = router({
     .input(z.object({
       tripId: z.number(),
       date: z.number(),
-      outfitId: z.number().nullable(),
+      outfitId: z.number().nullable().optional(),
+      outfitId2: z.number().nullable().optional(),
       notes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -763,7 +764,8 @@ const travelRouter = router({
         tripId: input.tripId,
         userId: ctx.user.id,
         date: new Date(input.date),
-        outfitId: input.outfitId,
+        outfitId: input.outfitId ?? null,
+        outfitId2: input.outfitId2 ?? null,
         notes: input.notes ?? null,
         weatherTemp: null,
         weatherDesc: null,
