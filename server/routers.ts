@@ -975,6 +975,40 @@ const collaboratorsRouter = router({
   myAccess: protectedProcedure.query(async ({ ctx }) => {
     return getCollaborationsForUser(ctx.user.id);
   }),
+  addWishlistItem: protectedProcedure
+    .input(z.object({
+      ownerId: z.number(),
+      title: z.string().min(1),
+      brand: z.string().optional(),
+      category: z.enum(["tops", "bottoms", "outerwear", "shoes", "accessories", "bags", "dresses", "suits", "activewear", "other"]),
+      color: z.string().optional(),
+      size: z.string().optional(),
+      purchasePrice: z.number().optional(),
+      currency: z.string().optional(),
+      imageUrl: z.string().optional(),
+      buyUrl: z.string().optional(),
+      personalNote: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify the requesting user has edit access
+      const accesses = await getCollaborationsForUser(ctx.user.id);
+      const access = accesses.find((a) => a.ownerId === input.ownerId);
+      if (!access) throw new TRPCError({ code: "FORBIDDEN", message: "No access to this wardrobe" });
+      if (access.permission !== "edit") throw new TRPCError({ code: "FORBIDDEN", message: "You have view-only access" });
+      const { ownerId, ...rest } = input;
+      const data = {
+        ...rest,
+        userId: ownerId,
+        isOwned: false, // always wishlist
+        currentPrice: rest.purchasePrice,
+      };
+      const result = await createItem(data);
+      const insertId = (result as any).insertId as number;
+      if (rest.brand) {
+        await upsertBrandAsDesigner(ownerId, rest.brand);
+      }
+      return { id: insertId };
+    }),
   ownerWishlist: protectedProcedure
     .input(z.object({ ownerId: z.number() }))
     .query(async ({ ctx, input }) => {

@@ -386,14 +386,21 @@ function OutfitDetailModal({
       })
       .filter(Boolean)
       .join("\n")}`;
-    const imageUrls = (outfit.items ?? [])
-      .map((i: any) => i.item?.imageUrl)
-      .filter(Boolean) as string[];
+    const collageItems = (outfit.items ?? []).map((i: any) => ({
+      imageUrl: i.item?.imageUrl,
+      brand: i.item?.brand,
+      title: i.item?.title ?? "",
+      slot: i.slot,
+      category: i.item?.category,
+      purchasePrice: i.item?.purchasePrice,
+      currentPrice: i.item?.currentPrice,
+      currency: i.item?.currency,
+    }));
     const canShare = typeof navigator.share === "function";
-    const canShareFiles = canShare && typeof navigator.canShare === "function" && imageUrls.length > 0;
+    const canShareFiles = canShare && typeof navigator.canShare === "function" && collageItems.some((c: { imageUrl?: string | null }) => c.imageUrl);
     if (canShareFiles) {
       try {
-        const blob = await generateOutfitCollage(imageUrls, outfit.name);
+        const blob = await generateOutfitCollage(collageItems, outfit.name, outfit.totalPrice);
         if (blob) {
           const file = new File([blob], `${outfit.name}.jpg`, { type: "image/jpeg" });
           if (navigator.canShare({ files: [file] })) {
@@ -567,14 +574,21 @@ function OutfitCard({
       })
       .filter(Boolean)
       .join("\n")}`;
-    const imageUrls = displayItems
-      .map((i: any) => i.item?.imageUrl)
-      .filter(Boolean) as string[];
+    const collageItems = displayItems.map((i: any) => ({
+      imageUrl: i.item?.imageUrl,
+      brand: i.item?.brand,
+      title: i.item?.title ?? "",
+      slot: i.slot,
+      category: i.item?.category,
+      purchasePrice: i.item?.purchasePrice,
+      currentPrice: i.item?.currentPrice,
+      currency: i.item?.currency,
+    }));
     const canShare = typeof navigator.share === "function";
-    const canShareFiles = canShare && typeof navigator.canShare === "function" && imageUrls.length > 0;
+    const canShareFiles = canShare && typeof navigator.canShare === "function" && collageItems.some((c: { imageUrl?: string | null }) => c.imageUrl);
     if (canShareFiles) {
       try {
-        const blob = await generateOutfitCollage(imageUrls, outfit.name);
+        const blob = await generateOutfitCollage(collageItems, outfit.name, outfit.totalPrice);
         if (blob) {
           const file = new File([blob], `${outfit.name}.jpg`, { type: "image/jpeg" });
           if (navigator.canShare({ files: [file] })) {

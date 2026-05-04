@@ -1,36 +1,63 @@
 /**
- * Draws a horizontal strip of item images onto a canvas and returns a Blob.
- * Falls back gracefully when images fail to load (CORS etc.).
+ * Generates an editorial-style outfit collage image.
+ * Layout: header (name + price), 2-column item cards (category badge, image,
+ * brand, title, price), footer with platform name.
  */
+
+export interface CollageItem {
+  imageUrl?: string | null;
+  brand?: string | null;
+  title: string;
+  category?: string | null;
+  slot?: string | null;
+  purchasePrice?: number | null;
+  currentPrice?: number | null;
+  currency?: string | null;
+}
+
 export async function generateOutfitCollage(
-  imageUrls: string[],
-  outfitName: string
+  items: CollageItem[],
+  outfitName: string,
+  totalPrice?: number | null,
+  currency = "USD"
 ): Promise<Blob | null> {
-  const CELL = 200;
-  const HEADER = 48;
-  const cols = Math.min(imageUrls.length, 5);
-  if (cols === 0) return null;
+  const filled = items.filter((i) => i.imageUrl || i.title);
+  if (filled.length === 0) return null;
+
+  const COLS = 2;
+  const CARD_W = 420;
+  const IMG_H = 420;
+  const META_H = 120;
+  const CARD_H = IMG_H + META_H;
+  const GAP = 2;
+  const HEADER_H = 100;
+  const FOOTER_H = 64;
+  const ROWS = Math.ceil(filled.length / COLS);
+  const W = COLS * CARD_W + (COLS - 1) * GAP;
+  const H = HEADER_H + ROWS * CARD_H + (ROWS - 1) * GAP + FOOTER_H;
 
   const canvas = document.createElement("canvas");
-  canvas.width = cols * CELL;
-  canvas.height = CELL + HEADER;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  // Background
-  ctx.fillStyle = "#F5F5F5";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Header bar
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, canvas.width, HEADER);
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = `500 ${Math.min(18, Math.floor(canvas.width / (outfitName.length * 0.7 + 2)))}px sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(outfitName.toUpperCase(), canvas.width / 2, HEADER / 2);
+  ctx.fillRect(0, 0, W, H);
 
-  // Load and draw images
+  // Header
+  ctx.fillStyle = "#000000";
+  ctx.font = "bold 42px 'Helvetica Neue', Arial, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(outfitName.toUpperCase(), 32, 20);
+
+  const subParts: string[] = [`${filled.length} piece${filled.length !== 1 ? "s" : ""}`];
+  if (totalPrice) subParts.push(`${currency} ${totalPrice.toLocaleString()}`);
+  ctx.fillStyle = "#888888";
+  ctx.font = "22px 'Helvetica Neue', Arial, sans-serif";
+  ctx.fillText(subParts.join("   "), 32, 68);
+
   const loadImage = (url: string): Promise<HTMLImageElement | null> =>
     new Promise((resolve) => {
       const img = new Image();
@@ -38,31 +65,107 @@ export async function generateOutfitCollage(
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
       img.src = url;
-      setTimeout(() => resolve(null), 5000);
+      setTimeout(() => resolve(null), 6000);
     });
 
-  const images = await Promise.all(imageUrls.slice(0, 5).map(loadImage));
+  const loadedImages = await Promise.all(
+    filled.map((item) => (item.imageUrl ? loadImage(item.imageUrl) : Promise.resolve(null)))
+  );
 
-  images.forEach((img, i) => {
-    const x = i * CELL;
-    const y = HEADER;
+  filled.forEach((item, idx) => {
+    const col = idx % COLS;
+    const row = Math.floor(idx / COLS);
+    const x = col * (CARD_W + GAP);
+    const y = HEADER_H + row * (CARD_H + GAP);
+
+    // Image area
+    ctx.fillStyle = "#F0EFED";
+    ctx.fillRect(x, y, CARD_W, IMG_H);
+
+    const img = loadedImages[idx];
     if (img) {
-      // Cover-fit into cell
-      const scale = Math.max(CELL / img.width, CELL / img.height);
-      const sw = CELL / scale;
-      const sh = CELL / scale;
+      const scale = Math.max(CARD_W / img.width, IMG_H / img.height);
+      const sw = CARD_W / scale;
+      const sh = IMG_H / scale;
       const sx = (img.width - sw) / 2;
       const sy = (img.height - sh) / 2;
-      ctx.drawImage(img, sx, sy, sw, sh, x, y, CELL, CELL);
-    } else {
-      ctx.fillStyle = "#E8E8E8";
-      ctx.fillRect(x, y, CELL, CELL);
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, CARD_W, IMG_H);
     }
-    // Cell border
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, CELL, CELL);
+
+    // Category badge
+    const badge = (item.slot || item.category || "").toUpperCase();
+    if (badge) {
+      const BADGE_PAD_X = 14;
+      const bh = 28;
+      ctx.font = "bold 16px 'Helvetica Neue', Arial, sans-serif";
+      const bw = ctx.measureText(badge).width + BADGE_PAD_X * 2;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.fillRect(x + 14, y + 14, bw, bh);
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(badge, x + 14 + BADGE_PAD_X, y + 14 + bh / 2);
+    }
+
+    // Meta area
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(x, y + IMG_H, CARD_W, META_H);
+
+    if (item.brand) {
+      ctx.fillStyle = "#888888";
+      ctx.font = "bold 16px 'Helvetica Neue', Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(item.brand.toUpperCase(), x + 20, y + IMG_H + 16);
+    }
+
+    ctx.fillStyle = "#000000";
+    ctx.font = "24px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textBaseline = "top";
+    const titleY = y + IMG_H + (item.brand ? 38 : 20);
+    const maxW = CARD_W - 40;
+    const words = item.title.split(" ");
+    let line = "";
+    let lineY = titleY;
+    let lineCount = 0;
+    for (const word of words) {
+      const test = line ? line + " " + word : word;
+      if (ctx.measureText(test).width > maxW && line && lineCount < 1) {
+        ctx.fillText(line, x + 20, lineY);
+        line = word;
+        lineY += 30;
+        lineCount++;
+      } else {
+        line = test;
+      }
+    }
+    if (line) ctx.fillText(line, x + 20, lineY);
+
+    const price = item.purchasePrice ?? item.currentPrice;
+    if (price) {
+      const cur = item.currency ?? currency;
+      ctx.fillStyle = "#444444";
+      ctx.font = "20px 'Helvetica Neue', Arial, sans-serif";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`${cur} ${price.toLocaleString()}`, x + 20, y + IMG_H + META_H - 14);
+    }
   });
 
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+  // Footer
+  const footerY = HEADER_H + ROWS * CARD_H + (ROWS - 1) * GAP;
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, footerY, W, FOOTER_H);
+  ctx.strokeStyle = "#E0E0E0";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, footerY);
+  ctx.lineTo(W, footerY);
+  ctx.stroke();
+  ctx.fillStyle = "#000000";
+  ctx.font = "bold 20px 'Helvetica Neue', Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("STYLE ICONOCLAST", W / 2, footerY + FOOTER_H / 2);
+
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.93));
 }
