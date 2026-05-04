@@ -43,22 +43,28 @@ const STEPS = [
   },
 ];
 
-export default function WelcomeOnboarding() {
+export default function WelcomeOnboarding({ forceOpen, onClose: onExternalClose }: { forceOpen?: boolean; onClose?: () => void } = {}) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
 
   useEffect(() => {
+    if (forceOpen) {
+      setStep(0);
+      setOpen(true);
+      return;
+    }
     const seen = localStorage.getItem(STORAGE_KEY);
     if (!seen) {
       // Small delay so the app finishes loading before the popup appears
       const t = setTimeout(() => setOpen(true), 800);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [forceOpen]);
 
   const dismiss = () => {
     localStorage.setItem(STORAGE_KEY, "1");
     setOpen(false);
+    onExternalClose?.();
   };
 
   const next = () => {

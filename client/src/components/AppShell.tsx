@@ -20,6 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   const { data: cartEntries = [] } = trpc.cart.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -58,6 +59,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-end gap-4 w-1/3">
               {isAuthenticated ? (
                 <>
+                  <button
+                    onClick={() => setShowTour(true)}
+                    className="flex items-center justify-center w-6 h-6 rounded-full border border-[#DEDEDE] text-[#999] hover:border-black hover:text-black transition-colors text-[11px] font-medium leading-none"
+                    title="Help / Tour"
+                    aria-label="Open tour"
+                  >
+                    ?
+                  </button>
                   <button
                     onClick={() => setCartOpen(true)}
                     className="relative flex items-center gap-1 text-black hover:opacity-60 transition-opacity"
@@ -197,7 +206,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Global cart panel */}
       <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
       {/* First-time onboarding popup */}
-      {isAuthenticated && <WelcomeOnboarding />}
+      {isAuthenticated && <WelcomeOnboarding forceOpen={showTour} onClose={() => setShowTour(false)} />}
     </div>
   );
 }
