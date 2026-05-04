@@ -1,7 +1,7 @@
 /**
  * Generates an editorial-style outfit collage image.
  * Layout: header (name + price), 2-column item cards (category badge, image,
- * brand, title, price), footer with platform name.
+ * brand, title, price), footer with Style Iconoclast logo image.
  */
 
 export interface CollageItem {
@@ -14,6 +14,8 @@ export interface CollageItem {
   currentPrice?: number | null;
   currency?: string | null;
 }
+
+const LOGO_URL = "/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg";
 
 export async function generateOutfitCollage(
   items: CollageItem[],
@@ -31,7 +33,7 @@ export async function generateOutfitCollage(
   const CARD_H = IMG_H + META_H;
   const GAP = 2;
   const HEADER_H = 100;
-  const FOOTER_H = 64;
+  const FOOTER_H = 80;
   const ROWS = Math.ceil(filled.length / COLS);
   const W = COLS * CARD_W + (COLS - 1) * GAP;
   const H = HEADER_H + ROWS * CARD_H + (ROWS - 1) * GAP + FOOTER_H;
@@ -68,9 +70,13 @@ export async function generateOutfitCollage(
       setTimeout(() => resolve(null), 6000);
     });
 
-  const loadedImages = await Promise.all(
-    filled.map((item) => (item.imageUrl ? loadImage(item.imageUrl) : Promise.resolve(null)))
-  );
+  // Load item images + logo in parallel
+  const [loadedImages, logoImg] = await Promise.all([
+    Promise.all(
+      filled.map((item) => (item.imageUrl ? loadImage(item.imageUrl) : Promise.resolve(null)))
+    ),
+    loadImage(LOGO_URL),
+  ]);
 
   filled.forEach((item, idx) => {
     const col = idx % COLS;
@@ -151,7 +157,7 @@ export async function generateOutfitCollage(
     }
   });
 
-  // Footer
+  // Footer — white background with top border, logo centred
   const footerY = HEADER_H + ROWS * CARD_H + (ROWS - 1) * GAP;
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, footerY, W, FOOTER_H);
@@ -161,11 +167,22 @@ export async function generateOutfitCollage(
   ctx.moveTo(0, footerY);
   ctx.lineTo(W, footerY);
   ctx.stroke();
-  ctx.fillStyle = "#000000";
-  ctx.font = "bold 20px 'Helvetica Neue', Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("STYLE ICONOCLAST", W / 2, footerY + FOOTER_H / 2);
+
+  if (logoImg) {
+    // Scale logo to fit within 50px tall, centred horizontally
+    const logoH = 50;
+    const logoW = (logoImg.width / logoImg.height) * logoH;
+    const logoX = (W - logoW) / 2;
+    const logoY = footerY + (FOOTER_H - logoH) / 2;
+    ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+  } else {
+    // Fallback to text if image fails to load
+    ctx.fillStyle = "#000000";
+    ctx.font = "bold 20px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("STYLE ICONOCLAST", W / 2, footerY + FOOTER_H / 2);
+  }
 
   return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.93));
 }
