@@ -59,7 +59,7 @@ export default function LoginPage() {
           />
           <div className="w-10 h-px bg-black mb-8" />
           <p className="text-[13px] text-[#5A5A5A] mb-10 leading-relaxed tracking-wide max-w-xs">
-            A curated space for cataloguing what you own, tracking value over time, and composing outfits with intention.
+            Own your style. Curate what you want, and dress with intention — wherever you go.
           </p>
           <button
             onClick={() => (window.location.href = getLoginUrl())}
