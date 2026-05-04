@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -175,7 +174,6 @@ function EntryCard({
   onDelete: () => void;
   onToggleFavorite: () => void;
 }) {
-  const [, navigate] = useLocation();
   const initials = entry.name
     .split(" ")
     .slice(0, 2)
@@ -257,7 +255,7 @@ function EntryCard({
         </div>
         {/* View Pieces link */}
         <button
-          onClick={() => navigate(`/wardrobe?brand=${encodeURIComponent(entry.name)}`)}
+          onClick={() => { window.location.href = `/wardrobe?brand=${encodeURIComponent(entry.name)}`; }}
           className="mt-2 flex items-center gap-1.5 text-[9px] tracking-[0.14em] uppercase text-[#ACABAB] hover:text-black transition-colors"
         >
           <Layers size={10} />
