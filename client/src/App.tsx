@@ -14,6 +14,8 @@ import DesignersPage from "@/pages/DesignersPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import TravelPage from "@/pages/TravelPage";
 import SharedTripPage from "@/pages/SharedTripPage";
+import CollabAcceptPage from "@/pages/CollabAcceptPage";
+import SharedWishlistPage from "@/pages/SharedWishlistPage";
 
 function Router() {
   return (
@@ -26,6 +28,8 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/travel" component={TravelPage} />
       <Route path="/trip/:token" component={SharedTripPage} />
+      <Route path="/collab/accept" component={CollabAcceptPage} />
+      <Route path="/shared-wishlist/:ownerId" component={SharedWishlistPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -53,6 +53,13 @@ import {
   getTripByShareToken,
   generateShareToken,
   upsertBrandAsDesigner,
+  inviteCollaborator,
+  listCollaborators,
+  revokeCollaborator,
+  acceptCollaboratorInvite,
+  getCollaborationsForUser,
+  getOwnerWishlistItems,
+  getUserById,
 } from "./db";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
@@ -940,6 +947,47 @@ const travelRouter = router({
       return getTripDays(trip.id, trip.userId);
     }),
 });
+// ─── Collaborators Router ────────────────────────────────────────────────────
+const collaboratorsRouter = router({
+  invite: protectedProcedure
+    .input(z.object({ email: z.string().email(), permission: z.enum(["view", "edit"]), origin: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const token = await inviteCollaborator(ctx.user.id, input.email, input.permission);
+      const base = input.origin ?? "";
+      return { token, inviteUrl: `${base}/collab/accept?token=${token}` };
+    }),
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return listCollaborators(ctx.user.id);
+  }),
+  revoke: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await revokeCollaborator(input.id, ctx.user.id);
+      return { success: true };
+    }),
+  accept: protectedProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const invite = await acceptCollaboratorInvite(input.token, ctx.user.id);
+      if (!invite) throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found or already used" });
+      return { ownerId: invite.ownerId, permission: invite.permission };
+    }),
+  myAccess: protectedProcedure.query(async ({ ctx }) => {
+    return getCollaborationsForUser(ctx.user.id);
+  }),
+  ownerWishlist: protectedProcedure
+    .input(z.object({ ownerId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      // Verify the requesting user has access
+      const accesses = await getCollaborationsForUser(ctx.user.id);
+      const hasAccess = accesses.some((a) => a.ownerId === input.ownerId);
+      if (!hasAccess) throw new TRPCError({ code: "FORBIDDEN" });
+      const items = await getOwnerWishlistItems(input.ownerId);
+      const owner = await getUserById(input.ownerId);
+      return { ownerName: owner?.name ?? "Someone", items };
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -958,6 +1006,7 @@ export const appRouter = router({
   designers: designersRouter,
   admin: adminRouter,
   travel: travelRouter,
+  collaborators: collaboratorsRouter,
 });
 
 export type AppRouter = typeof appRouter;

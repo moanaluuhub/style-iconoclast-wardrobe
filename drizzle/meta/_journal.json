@@ -64,6 +64,13 @@
       "when": 1777853336867,
       "tag": "0008_useful_toxin",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1777864609198,
+      "tag": "0009_neat_nightmare",
+      "breakpoints": true
     }
   ]
 }

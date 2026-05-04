@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { Users, ShoppingBag, Layers, Heart, Shield, ShieldOff, RefreshCw } from "lucide-react";
+import { Users, ShoppingBag, Layers, Heart, Shield, ShieldOff, RefreshCw, UserPlus, Trash2, Copy, Check } from "lucide-react";
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number | string; sub?: string }) {
   return (
@@ -13,6 +13,174 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
       </div>
       <div className="text-3xl font-light text-black">{value}</div>
       {sub && <div className="text-[10px] text-[#ACABAB] tracking-wide">{sub}</div>}
+    </div>
+  );
+}
+
+function CollaboratorsSection() {
+  const [email, setEmail] = useState("");
+  const [permission, setPermission] = useState<"view" | "edit">("view");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+
+  const { data: collaborators = [], isLoading } = trpc.collaborators.list.useQuery();
+
+  const invite = trpc.collaborators.invite.useMutation({
+    onSuccess: (data) => {
+      setInviteUrl(data.inviteUrl);
+      setEmail("");
+      utils.collaborators.list.invalidate();
+    },
+  });
+
+  const revoke = trpc.collaborators.revoke.useMutation({
+    onSuccess: () => utils.collaborators.list.invalidate(),
+  });
+
+  const handleInvite = () => {
+    if (!email.trim()) return;
+    invite.mutate({ email: email.trim(), permission, origin: window.location.origin });
+  };
+
+  const copyLink = (url: string, id: number) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const activeCollabs = (collaborators as any[]).filter((c) => c.status !== "revoked");
+
+  return (
+    <div className="mt-12">
+      <div className="mb-4">
+        <h3 className="text-[10px] tracking-[0.18em] uppercase text-[#5A5A5A] mb-1">Wishlist Collaborators</h3>
+        <p className="text-[11px] text-[#ACABAB]">
+          Invite someone to view or edit your wishlist. They'll receive a link to accept the invitation after logging in.
+        </p>
+      </div>
+
+      {/* Invite form */}
+      <div className="border border-[#DEDEDE] p-6 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="email"
+            placeholder="Collaborator's email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+            className="flex-1 border border-[#DEDEDE] px-3 py-2 text-[11px] tracking-wide placeholder:text-[#ACABAB] focus:outline-none focus:border-black transition-colors"
+          />
+          <select
+            value={permission}
+            onChange={(e) => setPermission(e.target.value as "view" | "edit")}
+            className="border border-[#DEDEDE] px-3 py-2 text-[11px] tracking-wide text-[#5A5A5A] focus:outline-none focus:border-black transition-colors bg-white"
+          >
+            <option value="view">View only</option>
+            <option value="edit">Can edit</option>
+          </select>
+          <button
+            onClick={handleInvite}
+            disabled={invite.isPending || !email.trim()}
+            className="flex items-center gap-1.5 bg-black text-white text-[10px] tracking-[0.14em] uppercase px-4 py-2 hover:bg-[#222] transition-colors disabled:opacity-50 whitespace-nowrap"
+          >
+            <UserPlus size={12} />
+            {invite.isPending ? "Sending..." : "Send Invite"}
+          </button>
+        </div>
+
+        {/* Show generated invite link */}
+        {inviteUrl && (
+          <div className="mt-4 p-3 bg-[#F5F5F5] border border-[#DEDEDE] flex items-center gap-3">
+            <span className="flex-1 text-[10px] text-[#5A5A5A] break-all">{inviteUrl}</span>
+            <button
+              onClick={() => { navigator.clipboard.writeText(inviteUrl); setCopiedId(-1); setTimeout(() => setCopiedId(null), 2000); }}
+              className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase text-[#5A5A5A] hover:text-black transition-colors shrink-0"
+            >
+              {copiedId === -1 ? <Check size={11} className="text-green-600" /> : <Copy size={11} />}
+              {copiedId === -1 ? "Copied" : "Copy"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Collaborators list */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="border border-[#DEDEDE] h-14 animate-pulse bg-[#F5F5F5]" />
+          ))}
+        </div>
+      ) : activeCollabs.length === 0 ? (
+        <div className="border border-[#DEDEDE] border-dashed py-10 text-center text-[11px] text-[#ACABAB]">
+          No collaborators yet. Invite someone above.
+        </div>
+      ) : (
+        <div className="border border-[#DEDEDE] overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-[#DEDEDE] bg-[#F5F5F5]">
+                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">Email</th>
+                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">Permission</th>
+                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">Status</th>
+                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium">Invited</th>
+                <th className="px-4 py-3 text-[9px] tracking-[0.14em] uppercase text-[#5A5A5A] font-medium text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeCollabs.map((c: any) => {
+                const link = `${window.location.origin}/collab/accept?token=${c.inviteToken}`;
+                return (
+                  <tr key={c.id} className="border-b border-[#DEDEDE] last:border-0 hover:bg-[#FAFAFA] transition-colors">
+                    <td className="px-4 py-3 text-[11px] text-black">{c.inviteEmail}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-[9px] tracking-[0.1em] uppercase border border-[#DEDEDE] px-2 py-0.5 text-[#5A5A5A]">
+                        {c.permission}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[9px] tracking-[0.1em] uppercase px-2 py-0.5 border ${
+                        c.status === "accepted"
+                          ? "border-green-300 text-green-600 bg-green-50"
+                          : "border-amber-300 text-amber-600 bg-amber-50"
+                      }`}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[10px] text-[#ACABAB]">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        {c.status === "pending" && (
+                          <button
+                            onClick={() => copyLink(link, c.id)}
+                            title="Copy invite link"
+                            className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase text-[#5A5A5A] hover:text-black transition-colors border border-[#DEDEDE] px-2 py-1"
+                          >
+                            {copiedId === c.id ? <Check size={10} className="text-green-600" /> : <Copy size={10} />}
+                            {copiedId === c.id ? "Copied" : "Copy link"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => revoke.mutate({ id: c.id })}
+                          disabled={revoke.isPending}
+                          title="Revoke access"
+                          className="flex items-center gap-1 text-[9px] tracking-[0.1em] uppercase text-[#5A5A5A] hover:text-red-600 transition-colors border border-[#DEDEDE] hover:border-red-300 px-2 py-1"
+                        >
+                          <Trash2 size={10} />
+                          Revoke
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -182,6 +350,9 @@ export default function AdminDashboard() {
           </table>
         </div>
       )}
+
+      {/* Collaborators section */}
+      <CollaboratorsSection />
 
       {/* Confirm role change dialog */}
       {confirmId !== null && confirmRole !== null && (

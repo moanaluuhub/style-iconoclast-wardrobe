@@ -195,3 +195,18 @@ export const packingItems = mysqlTable("packing_items", {
 });
 export type PackingItem = typeof packingItems.$inferSelect;
 export type InsertPackingItem = typeof packingItems.$inferInsert;
+
+// ─── Collaborators ────────────────────────────────────────────────────────────
+export const collaborators = mysqlTable("collaborators", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(),        // the wardrobe owner
+  collaboratorId: int("collaboratorId"),    // null until accepted
+  inviteEmail: varchar("inviteEmail", { length: 320 }).notNull(),
+  inviteToken: varchar("inviteToken", { length: 64 }).notNull().unique(),
+  permission: mysqlEnum("permission", ["view", "edit"]).default("view").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "revoked"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+});
+export type Collaborator = typeof collaborators.$inferSelect;
+export type InsertCollaborator = typeof collaborators.$inferInsert;

@@ -22,6 +22,7 @@ import {
   trips,
   tripDays,
   packingItems,
+  collaborators,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -84,6 +85,12 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
 // ─── Wardrobe Items ────────────────────────────────────────────────────────────
 
 export async function getItems(
@@ -701,4 +708,93 @@ export async function upsertBrandAsDesigner(userId: number, brandName: string) {
       type: "brand",
     });
   }
+}
+
+// ─── Collaborators ─────────────────────────────────────────────────────────────
+
+import { randomBytes } from "crypto";
+
+export async function inviteCollaborator(
+  ownerId: number,
+  email: string,
+  permission: "view" | "edit"
+) {
+  const db = await getDb();
+  if (!db) return "";
+  const token = randomBytes(32).toString("hex");
+  await db.insert(collaborators).values({
+    ownerId,
+    inviteEmail: email,
+    inviteToken: token,
+    permission,
+    status: "pending",
+  });
+  return token;
+}
+
+export async function listCollaborators(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(collaborators)
+    .where(eq(collaborators.ownerId, ownerId));
+}
+
+export async function revokeCollaborator(id: number, ownerId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(collaborators)
+    .set({ status: "revoked" })
+    .where(and(eq(collaborators.id, id), eq(collaborators.ownerId, ownerId)));
+}
+
+export async function acceptCollaboratorInvite(token: string, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(collaborators)
+    .where(
+      and(
+        eq(collaborators.inviteToken, token),
+        eq(collaborators.status, "pending")
+      )
+    );
+  if (!rows.length) return null;
+  const invite = rows[0];
+  await db
+    .update(collaborators)
+    .set({ status: "accepted", collaboratorId: userId, acceptedAt: new Date() })
+    .where(eq(collaborators.id, invite.id));
+  return invite;
+}
+
+export async function getCollaborationsForUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(collaborators)
+    .where(
+      and(
+        eq(collaborators.collaboratorId, userId),
+        eq(collaborators.status, "accepted")
+      )
+    );
+}
+
+export async function getOwnerWishlistItems(ownerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(wardrobeItems)
+    .where(
+      and(
+        eq(wardrobeItems.userId, ownerId),
+        eq(wardrobeItems.isOwned, false)
+      )
+    );
 }
