@@ -52,6 +52,7 @@ import {
   deletePackingItem,
   getTripByShareToken,
   generateShareToken,
+  upsertBrandAsDesigner,
 } from "./db";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
@@ -136,6 +137,10 @@ const itemsRouter = router({
           note: "Purchase price",
         });
       }
+      // Auto-add brand to Designers index if not already present
+      if (rest.brand) {
+        await upsertBrandAsDesigner(ctx.user.id, rest.brand);
+      }
       return { id: insertId };
     }),
 
@@ -170,6 +175,10 @@ const itemsRouter = router({
       await updateItem(id, ctx.user.id, data);
       if (tags !== undefined) {
         await setTagsForItem(id, ctx.user.id, tags);
+      }
+      // Auto-add brand to Designers index if brand was updated
+      if (rest.brand) {
+        await upsertBrandAsDesigner(ctx.user.id, rest.brand);
       }
       return { success: true };
     }),

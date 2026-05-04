@@ -682,3 +682,23 @@ export async function deletePackingItem(itemId: number, userId: number) {
   if (!db) return;
   await db.delete(packingItems).where(and(eq(packingItems.id, itemId), eq(packingItems.userId, userId)));
 }
+
+// ─── Auto-upsert brand into designers_shops ────────────────────────────────────
+export async function upsertBrandAsDesigner(userId: number, brandName: string) {
+  const db = await getDb();
+  if (!db || !brandName.trim()) return;
+  const name = brandName.trim();
+  // Check if a designer/shop/brand with this name already exists for the user
+  const existing = await db
+    .select({ id: designersShops.id })
+    .from(designersShops)
+    .where(and(eq(designersShops.userId, userId), like(designersShops.name, name)))
+    .limit(1);
+  if (existing.length === 0) {
+    await db.insert(designersShops).values({
+      userId,
+      name,
+      type: "brand",
+    });
+  }
+}
