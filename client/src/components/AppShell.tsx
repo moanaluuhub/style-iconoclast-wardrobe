@@ -179,7 +179,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               className="h-[8.58rem] w-auto object-contain"
             />
             <p className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">
-              Your private fashion archive
+              Own your style
             </p>
             {isAuthenticated && (
               <button

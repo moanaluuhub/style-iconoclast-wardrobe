@@ -372,7 +372,7 @@ export default function WardrobePage() {
           </h1>
           <div className="w-8 h-px bg-black mx-auto my-6" />
           <p className="text-[12px] tracking-[0.06em] text-[#5A5A5A] mb-8 leading-relaxed">
-            Your private fashion archive. Catalogue what you own, track value over time, and compose outfits with intention.
+            Own your style. Curate what you want, and dress with intention — wherever you go.
           </p>
           <button
             onClick={() => (window.location.href = getLoginUrl())}
