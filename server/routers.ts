@@ -44,6 +44,7 @@ import {
   deleteTrip,
   getTripById,
   getTripDays,
+  getTripDaysWithOutfits,
   upsertTripDay,
   updateTripDay,
   getPackingItems,
@@ -944,7 +945,7 @@ const travelRouter = router({
     .query(async ({ input }) => {
       const trip = await getTripByShareToken(input.token);
       if (!trip) throw new TRPCError({ code: "NOT_FOUND" });
-      return getTripDays(trip.id, trip.userId);
+      return getTripDaysWithOutfits(trip.id, trip.userId);
     }),
 });
 // ─── Collaborators Router ────────────────────────────────────────────────────

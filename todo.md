@@ -161,3 +161,7 @@
 - [x] Travel: packing list templates (Weekend city break, Beach holiday, Business trip)
 - [x] Travel: outfit photo thumbnail on day cards
 - [x] Travel: shareable read-only trip link
+
+## Enhancement Round 9
+- [x] Travel: shared trip page shows actual outfit item images (not just shirt icon) — fix getSharedDays to join outfit items + wardrobe image URLs
+- [x] Outfit collage footer: use actual Style Iconoclast logo JPEG instead of plain text

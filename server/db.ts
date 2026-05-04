@@ -798,3 +798,44 @@ export async function getOwnerWishlistItems(ownerId: number) {
       )
     );
 }
+
+// ─── Trip Days with Outfit Details (for shared trip view) ─────────────────────
+export async function getTripDaysWithOutfits(tripId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get all days for this trip
+  const days = await db
+    .select()
+    .from(tripDays)
+    .where(and(eq(tripDays.tripId, tripId), eq(tripDays.userId, userId)))
+    .orderBy(asc(tripDays.date));
+
+  // For each day that has an outfit, fetch the outfit name + item images
+  const enriched = await Promise.all(
+    days.map(async (day) => {
+      if (!day.outfitId) return { ...day, outfitName: null, outfitImages: [] };
+      const [outfitRow] = await db
+        .select({ id: outfits.id, name: outfits.name })
+        .from(outfits)
+        .where(eq(outfits.id, day.outfitId))
+        .limit(1);
+      const items = outfitRow
+        ? await db
+            .select({ imageUrl: wardrobeItems.imageUrl, slot: outfitItems.slot })
+            .from(outfitItems)
+            .leftJoin(wardrobeItems, eq(outfitItems.itemId, wardrobeItems.id))
+            .where(eq(outfitItems.outfitId, outfitRow.id))
+        : [];
+      const outfitImages = items
+        .map((i) => i.imageUrl)
+        .filter((url): url is string => !!url);
+      return {
+        ...day,
+        outfitName: outfitRow?.name ?? null,
+        outfitImages,
+      };
+    })
+  );
+  return enriched;
+}

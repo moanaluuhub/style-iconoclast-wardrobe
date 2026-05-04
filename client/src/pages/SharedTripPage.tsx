@@ -28,7 +28,6 @@ export default function SharedTripPage() {
   const { token } = useParams<{ token: string }>();
   const { data: trip, isLoading: tripLoading } = trpc.travel.getShared.useQuery({ token: token ?? "" }, { enabled: !!token });
   const { data: days } = trpc.travel.getSharedDays.useQuery({ token: token ?? "" }, { enabled: !!token });
-  const { data: outfits } = trpc.outfits.list.useQuery(undefined, { enabled: false });
 
   const tripDays = useMemo(() => {
     if (!trip) return [];
@@ -64,7 +63,11 @@ export default function SharedTripPage() {
     <div className="min-h-screen bg-white">
       {/* Brand header */}
       <div className="border-b border-[#DEDEDE] px-6 py-4 flex items-center justify-between">
-        <span className="text-[13px] tracking-[0.3em] uppercase font-light">Style Iconoclast</span>
+        <img
+          src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
+          alt="Style Iconoclast"
+          className="h-6 object-contain"
+        />
         <span className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] border border-[#DEDEDE] px-2 py-1">Shared Trip</span>
       </div>
 
@@ -101,8 +104,13 @@ export default function SharedTripPage() {
           {tripDays.map((day, i) => {
             const existing = dayMap[day.toDateString()];
             const dateLabel = day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+            const outfitImages: string[] = (existing as any)?.outfitImages ?? [];
+            const outfitName: string | null = (existing as any)?.outfitName ?? null;
+            const hasOutfit = !!existing?.outfitId;
+
             return (
               <div key={day.toISOString()} className="border border-[#DEDEDE] p-4">
+                {/* Day header */}
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-[9px] tracking-[0.2em] uppercase text-[#ACABAB]">Day {i + 1}</p>
@@ -115,10 +123,42 @@ export default function SharedTripPage() {
                     </div>
                   )}
                 </div>
-                {existing?.outfitId ? (
-                  <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-2">
-                    <Shirt className="w-3.5 h-3.5 text-[#ACABAB]" />
-                    <span className="text-[11px] text-black">Outfit planned</span>
+
+                {/* Outfit content */}
+                {hasOutfit ? (
+                  <div>
+                    {/* Item image thumbnails */}
+                    {outfitImages.length > 0 ? (
+                      <div className="flex gap-1 mb-2 flex-wrap">
+                        {outfitImages.slice(0, 4).map((url, idx) => (
+                          <img
+                            key={idx}
+                            src={url}
+                            alt=""
+                            className="w-20 h-20 object-cover bg-[#F0F0F0]"
+                          />
+                        ))}
+                        {outfitImages.length > 4 && (
+                          <div className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
+                            <span className="text-[11px] text-[#ACABAB]">+{outfitImages.length - 4}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* Outfit assigned but no images uploaded — show placeholder row */
+                      <div className="flex gap-1 mb-2">
+                        {[0, 1, 2].map(idx => (
+                          <div key={idx} className="w-20 h-20 bg-[#F0F0F0] flex items-center justify-center">
+                            <Shirt className="w-5 h-5 text-[#DEDEDE]" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Outfit name pill */}
+                    <div className="flex items-center gap-2 bg-[#F8F8F8] px-3 py-2">
+                      <Shirt className="w-3.5 h-3.5 text-[#ACABAB] shrink-0" />
+                      <span className="text-[11px] text-black truncate">{outfitName ?? "Outfit planned"}</span>
+                    </div>
                   </div>
                 ) : (
                   <div className="border border-dashed border-[#DEDEDE] px-3 py-2 text-center">
@@ -128,6 +168,15 @@ export default function SharedTripPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-12 pt-6 border-t border-[#DEDEDE] flex items-center justify-center">
+          <img
+            src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
+            alt="Style Iconoclast"
+            className="h-5 object-contain opacity-60"
+          />
         </div>
       </div>
     </div>
