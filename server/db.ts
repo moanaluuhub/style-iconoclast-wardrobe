@@ -658,11 +658,13 @@ export async function upsertTripDay(data: InsertTripDay) {
     .limit(1);
   if (existingRows.length > 0) {
     const existing = existingRows[0];
-    // Merge: only overwrite fields that are explicitly provided (non-null in data)
-    // This preserves weather, notes, and the other outfit slot when only one slot is being updated
+    // Merge logic:
+    // - undefined means "leave unchanged" (preserve existing value)
+    // - null means "explicitly clear" (set to null)
+    // - a number means "set to this outfit"
     const merged: Partial<InsertTripDay> = {
-      outfitId: data.outfitId !== null ? data.outfitId : existing.outfitId,
-      outfitId2: data.outfitId2 !== null ? data.outfitId2 : existing.outfitId2,
+      outfitId: data.outfitId !== undefined ? data.outfitId : existing.outfitId,
+      outfitId2: data.outfitId2 !== undefined ? data.outfitId2 : existing.outfitId2,
       outfitLabel1: data.outfitLabel1 !== undefined ? data.outfitLabel1 : existing.outfitLabel1,
       outfitLabel2: data.outfitLabel2 !== undefined ? data.outfitLabel2 : existing.outfitLabel2,
       notes: data.notes !== null ? data.notes : existing.notes,

@@ -217,12 +217,13 @@ function EditableLabel({
 }
 
 function OutfitSlot({
-  label, defaultLabel, outfit, onAssign, onLabelSave,
+  label, defaultLabel, outfit, onAssign, onClear, onLabelSave,
 }: {
   label: string | null | undefined;
   defaultLabel: string;
   outfit: OutfitEntry | undefined;
   onAssign: () => void;
+  onClear: () => void;
   onLabelSave: (label: string) => void;
 }) {
   return (
@@ -251,6 +252,13 @@ function OutfitSlot({
           <div className="flex items-center gap-1 bg-[#F8F8F8] px-2 py-1">
             <span className="text-[10px] text-black flex-1 truncate">{outfit.name}</span>
             {outfit.season && <span className="text-[8px] text-[#ACABAB]">{outfit.season}</span>}
+            <button
+              onClick={onClear}
+              title="Remove outfit"
+              className="ml-1 text-[#DEDEDE] hover:text-black transition-colors shrink-0"
+            >
+              <X className="w-3 h-3" />
+            </button>
           </div>
         </div>
       ) : (
@@ -318,6 +326,7 @@ function DayCard({
             defaultLabel="Day look"
             outfit={outfit1}
             onAssign={() => setShowPicker(1)}
+            onClear={() => setDayOutfit.mutate({ tripId, date: day.getTime(), outfitId: null })}
             onLabelSave={label => saveLabel(1, label)}
           />
           <OutfitSlot
@@ -325,6 +334,7 @@ function DayCard({
             defaultLabel="Evening look"
             outfit={outfit2}
             onAssign={() => setShowPicker(2)}
+            onClear={() => setDayOutfit.mutate({ tripId, date: day.getTime(), outfitId2: null })}
             onLabelSave={label => saveLabel(2, label)}
           />
         </div>

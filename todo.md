@@ -171,3 +171,6 @@
 
 ## Enhancement Round 11
 - [x] Travel: allow renaming "Day look" / "Evening look" labels per day (outfitLabel1, outfitLabel2 in DB)
+
+## Enhancement Round 12
+- [x] Travel: add × clear button to each assigned outfit slot to remove outfit without reassigning
