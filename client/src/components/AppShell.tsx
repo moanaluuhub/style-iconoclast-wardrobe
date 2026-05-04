@@ -5,6 +5,7 @@ import { Link, useLocation } from "wouter";
 import { ShoppingBag, Search, User } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import CartPanel from "./CartPanel";
+import WelcomeOnboarding from "./WelcomeOnboarding";
 
 const NAV_ITEMS = [
   { href: "/", label: "Wardrobe" },
@@ -195,6 +196,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Global cart panel */}
       <CartPanel open={cartOpen} onClose={() => setCartOpen(false)} />
+      {/* First-time onboarding popup */}
+      {isAuthenticated && <WelcomeOnboarding />}
     </div>
   );
 }
