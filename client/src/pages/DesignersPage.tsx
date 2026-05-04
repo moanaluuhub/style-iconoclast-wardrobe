@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Heart, ExternalLink, Trash2, Pencil, Search, Star, Layers } from "lucide-react";
+import { Plus, Heart, ExternalLink, Trash2, Pencil, Search, Star } from "lucide-react";
 import { getLoginUrl } from "@/const";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -253,14 +253,6 @@ function EntryCard({
             </button>
           </div>
         </div>
-        {/* View Pieces link */}
-        <button
-          onClick={() => { window.location.href = `/wardrobe?brand=${encodeURIComponent(entry.name)}`; }}
-          className="mt-2 flex items-center gap-1.5 text-[9px] tracking-[0.14em] uppercase text-[#ACABAB] hover:text-black transition-colors"
-        >
-          <Layers size={10} />
-          View pieces
-        </button>
       </div>
     </div>
   );
