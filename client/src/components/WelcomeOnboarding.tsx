@@ -14,17 +14,17 @@ const STEPS = [
     cta: "Let me show you around",
   },
   {
-    icon: <BookOpen size={40} strokeWidth={1.2} />,
-    title: "My Archive",
-    subtitle: "Pieces you already own",
-    body: "Add every item from your real wardrobe — clothes, shoes, bags, accessories. Upload a photo, add the brand and price, and your collection is always at your fingertips.",
-    cta: "Next",
-  },
-  {
     icon: <ShoppingBag size={40} strokeWidth={1.2} />,
     title: "My Wishlist & Cart",
     subtitle: "Shop with intention",
     body: "Save pieces you want to buy to your Wishlist. Add them to your Cart when you're ready to shop, and open all buy links at once with a single click.",
+    cta: "Next",
+  },
+  {
+    icon: <BookOpen size={40} strokeWidth={1.2} />,
+    title: "My Archive",
+    subtitle: "Pieces you already own",
+    body: "Add every item from your real wardrobe — clothes, shoes, bags, accessories. Upload a photo, add the brand and price, and your collection is always at your fingertips.",
     cta: "Next",
   },
   {
