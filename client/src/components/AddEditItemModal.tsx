@@ -23,6 +23,7 @@ interface ItemFormData {
   buyUrl: string;
   personalNote: string;
   isLoved: boolean;
+  isOwned: boolean;
   tags: string[];
 }
 
@@ -46,6 +47,7 @@ const DEFAULT_FORM: ItemFormData = {
   buyUrl: "",
   personalNote: "",
   isLoved: false,
+  isOwned: true,
   tags: [],
 };
 
@@ -76,6 +78,7 @@ export default function AddEditItemModal({
           buyUrl: editItem.buyUrl ?? "",
           personalNote: editItem.personalNote ?? "",
           isLoved: editItem.isLoved ?? false,
+          isOwned: editItem.isOwned ?? true,
           tags: editItem.tags ?? [],
         }
       : DEFAULT_FORM
@@ -205,6 +208,7 @@ export default function AddEditItemModal({
       buyUrl: form.buyUrl || undefined,
       personalNote: form.personalNote || undefined,
       isLoved: form.isLoved,
+      isOwned: form.isOwned,
       tags: form.tags,
     };
 
@@ -539,6 +543,35 @@ export default function AddEditItemModal({
                 </div>
               )}
             </div>
+
+            {/* Ownership toggle */}
+            <div className="flex gap-2 mb-1">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, isOwned: true }))}
+                className={`flex-1 text-[10px] tracking-[0.14em] uppercase py-2.5 border transition-colors ${
+                  form.isOwned
+                    ? "bg-black text-white border-black"
+                    : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+                }`}
+              >
+                My Archive
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, isOwned: false }))}
+                className={`flex-1 text-[10px] tracking-[0.14em] uppercase py-2.5 border transition-colors ${
+                  !form.isOwned
+                    ? "bg-black text-white border-black"
+                    : "border-[#DEDEDE] text-[#5A5A5A] hover:border-black hover:text-black"
+                }`}
+              >
+                My Wishlist
+              </button>
+            </div>
+            <p className="text-[10px] text-[#ACABAB] tracking-wide mb-3">
+              {form.isOwned ? "Piece you already own — part of your virtual wardrobe" : "Piece you want to buy — added to your cart"}
+            </p>
 
             {/* Love */}
             <button

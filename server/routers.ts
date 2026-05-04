@@ -110,6 +110,7 @@ const itemsRouter = router({
         buyUrl: z.string().optional(),
         personalNote: z.string().optional(),
         isLoved: z.boolean().optional(),
+        isOwned: z.boolean().optional(),
         tags: z.array(z.string()).optional(),
       })
     )
@@ -158,6 +159,7 @@ const itemsRouter = router({
         buyUrl: z.string().optional(),
         personalNote: z.string().optional(),
         isLoved: z.boolean().optional(),
+        isOwned: z.boolean().optional(),
         tags: z.array(z.string()).optional(),
       })
     )

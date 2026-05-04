@@ -55,6 +55,7 @@ export const wardrobeItems = mysqlTable("wardrobe_items", {
   imageKey: text("imageKey"),
   buyUrl: text("buyUrl"),
   personalNote: text("personalNote"),
+  isOwned: boolean("isOwned").default(true).notNull(),
   isLoved: boolean("isLoved").default(false).notNull(),
   wearCount: int("wearCount").default(0).notNull(),
   lastWornAt: timestamp("lastWornAt"),

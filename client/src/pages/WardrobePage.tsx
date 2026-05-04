@@ -56,12 +56,13 @@ function TrendBadge({ item }: { item: any }) {
 
 // ─── Item Card ─────────────────────────────────────────────────────────────────
 function ItemCard({
-  item, onClick, onCartToggle, inCart, onLoveToggle, onEdit,
+  item, onClick, onCartToggle, inCart, onLoveToggle, onEdit, hideCart = false,
 }: {
   item: any;
   onClick: () => void;
   onCartToggle: (e: React.MouseEvent) => void;
   inCart: boolean;
+  hideCart?: boolean;
   onLoveToggle: (e: React.MouseEvent) => void;
   onEdit: (e: React.MouseEvent) => void;
 }) {
@@ -133,13 +134,15 @@ function ItemCard({
             >
               <Share2 size={11} className="text-black" />
             </button>
-            <button
-              onClick={onCartToggle}
-              className={`transition-colors p-1.5 ${inCart ? "bg-black" : "bg-white/90 hover:bg-white"}`}
-              title={inCart ? "Remove from cart" : "Add to cart"}
-            >
-              <ShoppingBag size={11} className={inCart ? "text-white" : "text-black"} />
-            </button>
+            {!hideCart && (
+              <button
+                onClick={onCartToggle}
+                className={`transition-colors p-1.5 ${inCart ? "bg-black" : "bg-white/90 hover:bg-white"}`}
+                title={inCart ? "Remove from cart" : "Add to cart"}
+              >
+                <ShoppingBag size={11} className={inCart ? "text-white" : "text-black"} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -194,12 +197,13 @@ function ItemCard({
 
 // ─── Sortable wrapper ──────────────────────────────────────────────────────────
 function SortableItemCard({
-  item, onClick, onCartToggle, inCart, onLoveToggle, onEdit, dragMode, selectMode, isSelected, onToggleSelect,
+  item, onClick, onCartToggle, inCart, onLoveToggle, onEdit, dragMode, selectMode, isSelected, onToggleSelect, hideCart = false,
 }: {
   item: any;
   onClick: () => void;
   onCartToggle: (e: React.MouseEvent) => void;
   inCart: boolean;
+  hideCart?: boolean;
   onLoveToggle: (e: React.MouseEvent) => void;
   onEdit: (e: React.MouseEvent) => void;
   dragMode: boolean;
@@ -237,6 +241,7 @@ function SortableItemCard({
         onClick={dragMode ? () => {} : onClick}
         onCartToggle={onCartToggle}
         inCart={inCart}
+        hideCart={hideCart}
         onLoveToggle={onLoveToggle}
         onEdit={onEdit}
       />
@@ -262,6 +267,7 @@ export default function WardrobePage() {
   const [, navigate] = useLocation();
   const [localOrder, setLocalOrder] = useState<any[]>([]);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [wardrobeSection, setWardrobeSection] = useState<"all" | "wishlist" | "archive">("all");
 
   const utils = trpc.useUtils();
 
@@ -318,9 +324,14 @@ export default function WardrobePage() {
     toggleLove.mutate({ id: item.id, isLoved: !item.isLoved });
   };
 
-  const displayedItems = activeTag
-    ? (items as any[]).filter((item) => item.tags?.includes(activeTag))
+  const sectionFiltered = wardrobeSection === "archive"
+    ? (items as any[]).filter((item) => item.isOwned !== false)
+    : wardrobeSection === "wishlist"
+    ? (items as any[]).filter((item) => item.isOwned === false)
     : (items as any[]);
+  const displayedItems = activeTag
+    ? sectionFiltered.filter((item: any) => item.tags?.includes(activeTag))
+    : sectionFiltered;
   const itemIdsKey = displayedItems.map((i: any) => i.id).join(",");
   useEffect(() => { setLocalOrder(displayedItems); }, [itemIdsKey]);
 
@@ -365,6 +376,32 @@ export default function WardrobePage() {
 
   return (
     <div className="container py-8">
+      {/* Section tabs */}
+      <div className="flex border-b border-[#DEDEDE] mb-8">
+        {(["all", "wishlist", "archive"] as const).map((section) => {
+          const labels: Record<string, string> = { all: "All", wishlist: "My Wishlist", archive: "My Archive" };
+          const counts: Record<string, number> = {
+            all: (rawItems as any[]).length,
+            wishlist: (rawItems as any[]).filter((i: any) => i.isOwned === false).length,
+            archive: (rawItems as any[]).filter((i: any) => i.isOwned !== false).length,
+          };
+          return (
+            <button
+              key={section}
+              onClick={() => setWardrobeSection(section)}
+              className={`relative px-5 py-3 text-[10px] tracking-[0.18em] uppercase font-medium transition-colors ${
+                wardrobeSection === section
+                  ? "text-black border-b-2 border-black -mb-px"
+                  : "text-[#ACABAB] hover:text-black"
+              }`}
+            >
+              {labels[section]}
+              <span className="ml-1.5 text-[9px] text-[#ACABAB]">{counts[section]}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Page header */}
       <div className="flex items-center justify-between mb-8 pb-5 border-b border-[#DEDEDE]">
         <div>
@@ -561,6 +598,7 @@ export default function WardrobePage() {
                   onClick={() => !selectMode && setSelectedItemId(item.id)}
                   onCartToggle={(e) => handleCartToggle(e, item)}
                   inCart={cartItemIds.has(item.id)}
+                  hideCart={item.isOwned !== false}
                   onLoveToggle={(e) => handleLoveToggle(e, item)}
                   onEdit={(e) => { e.stopPropagation(); setEditItem(item); }}
                   dragMode={dragMode && !selectMode}
