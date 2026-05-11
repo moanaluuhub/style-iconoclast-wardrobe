@@ -1,7 +1,5 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { extractFromUrl as runExtractFromUrl } from "./extractor";
@@ -868,9 +866,11 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+    // No-op: Supabase auth state lives in the browser (localStorage); the
+    // client calls supabase.auth.signOut() in useAuth.ts. This endpoint is
+    // kept so existing client code (`trpc.auth.logout.useMutation`) doesn't
+    // need to change.
+    logout: publicProcedure.mutation(() => {
       return { success: true } as const;
     }),
   }),
