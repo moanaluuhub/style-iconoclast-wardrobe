@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   InsertUser,
   InsertWardrobeItem,
@@ -26,12 +27,14 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
+let _client: ReturnType<typeof postgres> | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _client = postgres(process.env.DATABASE_URL, { prepare: false });
+      _db = drizzle(_client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -75,7 +78,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  await db
+    .insert(users)
+    .values(values)
+    .onConflictDoUpdate({ target: users.openId, set: updateSet });
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -167,8 +173,11 @@ export async function getItemById(id: number, userId: number) {
 export async function createItem(data: InsertWardrobeItem) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(wardrobeItems).values(data);
-  return result[0];
+  const [row] = await db
+    .insert(wardrobeItems)
+    .values(data)
+    .returning({ id: wardrobeItems.id });
+  return row;
 }
 
 export async function updateItem(
@@ -309,8 +318,8 @@ export async function createOutfit(
 ) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(outfits).values(data);
-  const insertId = (result[0] as any).insertId as number;
+  const [row] = await db.insert(outfits).values(data).returning({ id: outfits.id });
+  const insertId = row.id;
   if (slots.length > 0) {
     await db.insert(outfitItems).values(
       slots.map((s) => ({
@@ -487,8 +496,11 @@ export async function getDesignersShops(
 export async function createDesignerShop(data: InsertDesignerShop) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(designersShops).values(data);
-  return (result[0] as any).insertId as number;
+  const [row] = await db
+    .insert(designersShops)
+    .values(data)
+    .returning({ id: designersShops.id });
+  return row.id;
 }
 
 export async function updateDesignerShop(
@@ -652,8 +664,8 @@ export async function generateShareToken(tripId: number, userId: number) {
 export async function createTrip(data: InsertTrip) {
   const db = await getDb();
   if (!db) return null;
-  const [result] = await db.insert(trips).values(data);
-  return result.insertId as number;
+  const [row] = await db.insert(trips).values(data).returning({ id: trips.id });
+  return row.id;
 }
 export async function updateTrip(tripId: number, userId: number, data: Partial<InsertTrip>) {
   const db = await getDb();
@@ -707,8 +719,8 @@ export async function upsertTripDay(data: InsertTripDay) {
     await db.update(tripDays).set(merged).where(eq(tripDays.id, existing.id));
     return existing.id;
   } else {
-    const [result] = await db.insert(tripDays).values(data);
-    return result.insertId as number;
+    const [row] = await db.insert(tripDays).values(data).returning({ id: tripDays.id });
+    return row.id;
   }
 }
 export async function updateTripDay(dayId: number, userId: number, data: Partial<InsertTripDay>) {
@@ -725,8 +737,11 @@ export async function getPackingItems(tripId: number, userId: number) {
 export async function addPackingItem(data: InsertPackingItem) {
   const db = await getDb();
   if (!db) return null;
-  const [result] = await db.insert(packingItems).values(data);
-  return result.insertId as number;
+  const [row] = await db
+    .insert(packingItems)
+    .values(data)
+    .returning({ id: packingItems.id });
+  return row.id;
 }
 export async function togglePackingItem(itemId: number, userId: number, checked: boolean) {
   const db = await getDb();

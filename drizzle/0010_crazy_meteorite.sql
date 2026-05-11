@@ -1,1 +1,0 @@
-ALTER TABLE `trip_days` ADD `outfitId2` int;

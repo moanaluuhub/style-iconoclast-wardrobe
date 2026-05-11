@@ -1,4 +1,5 @@
 import { getLoginUrl } from "@/const";
+import { supabase } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -26,6 +27,7 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logout = useCallback(async () => {
     try {
+      await supabase.auth.signOut();
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
       if (
@@ -41,11 +43,17 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
+  // Re-fetch auth.me whenever the Supabase session changes (sign-in, sign-out,
+  // token refresh, multi-tab sync). Without this, the UI stays stale after the
+  // OAuth callback completes.
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      utils.auth.me.invalidate();
+    });
+    return () => data.subscription.unsubscribe();
+  }, [utils]);
+
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,

@@ -1,1 +1,0 @@
-ALTER TABLE `outfit_items` MODIFY COLUMN `slot` enum('head','top','outerwear','bottom','shoes','accessory','bag','jewelry','other') NOT NULL;

@@ -10,6 +10,7 @@ import CanvasPage from "./pages/CanvasPage";
 import OutfitsPage from "./pages/OutfitsPage";
 import StatsPage from "./pages/StatsPage";
 import LoginPage from "./pages/LoginPage";
+import AuthCallback from "./pages/AuthCallback";
 import DesignersPage from "@/pages/DesignersPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import TravelPage from "@/pages/TravelPage";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/collab/accept" component={CollabAcceptPage} />
       <Route path="/shared-wishlist/:ownerId" component={SharedWishlistPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -1,4 +1,11 @@
-import { ENV } from "./env";
+// LLM helper backed by the official OpenAI SDK.
+// Public surface (`invokeLLM`, message/tool/response types) is preserved so
+// callers in server/routers.ts and elsewhere don't need to change.
+//
+// Model is configurable via OPENAI_MODEL (default: gpt-4o-mini, the cheapest
+// fast model with vision + JSON-schema support).
+
+import OpenAI, { type ClientOptions } from "openai";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -19,7 +26,12 @@ export type FileContent = {
   type: "file_url";
   file_url: {
     url: string;
-    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4" ;
+    mime_type?:
+      | "audio/mpeg"
+      | "audio/wav"
+      | "application/pdf"
+      | "audio/mp4"
+      | "video/mp4";
   };
 };
 
@@ -45,15 +57,23 @@ export type ToolChoicePrimitive = "none" | "auto" | "required";
 export type ToolChoiceByName = { name: string };
 export type ToolChoiceExplicit = {
   type: "function";
-  function: {
-    name: string;
-  };
+  function: { name: string };
 };
-
 export type ToolChoice =
   | ToolChoicePrimitive
   | ToolChoiceByName
   | ToolChoiceExplicit;
+
+export type JsonSchema = {
+  name: string;
+  schema: Record<string, unknown>;
+  strict?: boolean;
+};
+export type OutputSchema = JsonSchema;
+export type ResponseFormat =
+  | { type: "text" }
+  | { type: "json_object" }
+  | { type: "json_schema"; json_schema: JsonSchema };
 
 export type InvokeParams = {
   messages: Message[];
@@ -97,164 +117,98 @@ export type InvokeResult = {
   };
 };
 
-export type JsonSchema = {
-  name: string;
-  schema: Record<string, unknown>;
-  strict?: boolean;
-};
+let _client: OpenAI | null = null;
 
-export type OutputSchema = JsonSchema;
+function getClient(): OpenAI {
+  if (_client) return _client;
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
+  const options: ClientOptions = { apiKey };
+  if (process.env.OPENAI_BASE_URL) options.baseURL = process.env.OPENAI_BASE_URL;
+  _client = new OpenAI(options);
+  return _client;
+}
 
-export type ResponseFormat =
-  | { type: "text" }
-  | { type: "json_object" }
-  | { type: "json_schema"; json_schema: JsonSchema };
+function getModel(): string {
+  return process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+}
 
-const ensureArray = (
-  value: MessageContent | MessageContent[]
-): MessageContent[] => (Array.isArray(value) ? value : [value]);
+const ensureArray = <T>(v: T | T[]): T[] => (Array.isArray(v) ? v : [v]);
 
-const normalizeContentPart = (
-  part: MessageContent
-): TextContent | ImageContent | FileContent => {
-  if (typeof part === "string") {
-    return { type: "text", text: part };
-  }
-
-  if (part.type === "text") {
-    return part;
-  }
-
-  if (part.type === "image_url") {
-    return part;
-  }
-
-  if (part.type === "file_url") {
-    return part;
-  }
-
-  throw new Error("Unsupported message content part");
-};
-
-const normalizeMessage = (message: Message) => {
+function normalizeMessage(message: Message) {
   const { role, name, tool_call_id } = message;
 
   if (role === "tool" || role === "function") {
     const content = ensureArray(message.content)
-      .map(part => (typeof part === "string" ? part : JSON.stringify(part)))
+      .map((part) => (typeof part === "string" ? part : JSON.stringify(part)))
       .join("\n");
-
-    return {
-      role,
-      name,
-      tool_call_id,
-      content,
-    };
+    return { role, name, tool_call_id, content } as const;
   }
 
-  const contentParts = ensureArray(message.content).map(normalizeContentPart);
+  const parts = ensureArray(message.content).map((part) => {
+    if (typeof part === "string") return { type: "text", text: part } as const;
+    if (part.type === "text") return part;
+    if (part.type === "image_url") return part;
+    // FileContent isn't natively supported by chat completions — flatten into a
+    // text block referencing the URL so callers don't crash.
+    if (part.type === "file_url") {
+      return { type: "text", text: `[file: ${part.file_url.url}]` } as const;
+    }
+    throw new Error("Unsupported message content part");
+  });
 
-  // If there's only text content, collapse to a single string for compatibility
-  if (contentParts.length === 1 && contentParts[0].type === "text") {
-    return {
-      role,
-      name,
-      content: contentParts[0].text,
-    };
+  if (parts.length === 1 && parts[0].type === "text") {
+    return { role, name, content: parts[0].text } as const;
   }
 
-  return {
-    role,
-    name,
-    content: contentParts,
-  };
-};
+  return { role, name, content: parts } as const;
+}
 
-const normalizeToolChoice = (
+function normalizeToolChoice(
   toolChoice: ToolChoice | undefined,
   tools: Tool[] | undefined
-): "none" | "auto" | ToolChoiceExplicit | undefined => {
+): "none" | "auto" | ToolChoiceExplicit | undefined {
   if (!toolChoice) return undefined;
-
-  if (toolChoice === "none" || toolChoice === "auto") {
-    return toolChoice;
-  }
+  if (toolChoice === "none" || toolChoice === "auto") return toolChoice;
 
   if (toolChoice === "required") {
     if (!tools || tools.length === 0) {
-      throw new Error(
-        "tool_choice 'required' was provided but no tools were configured"
-      );
+      throw new Error("tool_choice 'required' was provided but no tools were configured");
     }
-
     if (tools.length > 1) {
-      throw new Error(
-        "tool_choice 'required' needs a single tool or specify the tool name explicitly"
-      );
+      throw new Error("tool_choice 'required' needs a single tool or specify the tool name explicitly");
     }
-
-    return {
-      type: "function",
-      function: { name: tools[0].function.name },
-    };
+    return { type: "function", function: { name: tools[0].function.name } };
   }
 
   if ("name" in toolChoice) {
-    return {
-      type: "function",
-      function: { name: toolChoice.name },
-    };
+    return { type: "function", function: { name: toolChoice.name } };
   }
-
   return toolChoice;
-};
+}
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
-
-const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-};
-
-const normalizeResponseFormat = ({
+function normalizeResponseFormat({
   responseFormat,
   response_format,
   outputSchema,
   output_schema,
-}: {
-  responseFormat?: ResponseFormat;
-  response_format?: ResponseFormat;
-  outputSchema?: OutputSchema;
-  output_schema?: OutputSchema;
-}):
-  | { type: "json_schema"; json_schema: JsonSchema }
-  | { type: "text" }
-  | { type: "json_object" }
-  | undefined => {
-  const explicitFormat = responseFormat || response_format;
-  if (explicitFormat) {
-    if (
-      explicitFormat.type === "json_schema" &&
-      !explicitFormat.json_schema?.schema
-    ) {
-      throw new Error(
-        "responseFormat json_schema requires a defined schema object"
-      );
+}: Pick<
+  InvokeParams,
+  "responseFormat" | "response_format" | "outputSchema" | "output_schema"
+>): ResponseFormat | undefined {
+  const explicit = responseFormat || response_format;
+  if (explicit) {
+    if (explicit.type === "json_schema" && !explicit.json_schema?.schema) {
+      throw new Error("responseFormat json_schema requires a defined schema object");
     }
-    return explicitFormat;
+    return explicit;
   }
 
   const schema = outputSchema || output_schema;
   if (!schema) return undefined;
-
   if (!schema.name || !schema.schema) {
     throw new Error("outputSchema requires both name and schema");
   }
-
   return {
     type: "json_schema",
     json_schema: {
@@ -263,70 +217,30 @@ const normalizeResponseFormat = ({
       ...(typeof schema.strict === "boolean" ? { strict: schema.strict } : {}),
     },
   };
-};
+}
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  const client = getClient();
 
-  const {
-    messages,
-    tools,
-    toolChoice,
-    tool_choice,
-    outputSchema,
-    output_schema,
-    responseFormat,
-    response_format,
-  } = params;
-
-  const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
-    messages: messages.map(normalizeMessage),
-  };
-
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
+  const messages = params.messages.map(normalizeMessage);
+  const toolChoice = normalizeToolChoice(
+    params.toolChoice || params.tool_choice,
+    params.tools
   );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
+  const responseFormat = normalizeResponseFormat(params);
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
-
-  const normalizedResponseFormat = normalizeResponseFormat({
-    responseFormat,
-    response_format,
-    outputSchema,
-    output_schema,
+  const completion = await client.chat.completions.create({
+    model: getModel(),
+    // OpenAI SDK accepts the same shape we produce; cast to keep our public
+    // type surface stable rather than coupling to the SDK's union types.
+    messages: messages as never,
+    ...(params.tools && params.tools.length > 0 ? { tools: params.tools } : {}),
+    ...(toolChoice ? { tool_choice: toolChoice } : {}),
+    ...(responseFormat ? { response_format: responseFormat as never } : {}),
+    max_tokens: params.maxTokens ?? params.max_tokens ?? 32768,
   });
 
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
-  }
-
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
-  }
-
-  return (await response.json()) as InvokeResult;
+  // The SDK return type already matches our InvokeResult shape closely; pass
+  // through with a cast since the union types diverge on edge cases.
+  return completion as unknown as InvokeResult;
 }

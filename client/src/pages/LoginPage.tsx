@@ -1,4 +1,4 @@
-import { getLoginUrl } from "@/const";
+import { signInWithGoogle } from "@/lib/supabase";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
@@ -62,7 +62,7 @@ export default function LoginPage() {
             Your digital wardrobe. Organise what you own, shop what you want, and build your looks — all in one place.
           </p>
           <button
-            onClick={() => (window.location.href = getLoginUrl())}
+            onClick={() => { void signInWithGoogle(); }}
             className="w-full max-w-xs bg-black text-white text-[10px] tracking-[0.22em] uppercase py-4 hover:bg-[#222] transition-colors"
           >
             Enter the Archive
@@ -195,7 +195,7 @@ export default function LoginPage() {
           Start your wardrobe
         </h2>
         <button
-          onClick={() => (window.location.href = getLoginUrl())}
+          onClick={() => { void signInWithGoogle(); }}
           className="border border-white text-white text-[10px] tracking-[0.22em] uppercase px-12 py-4 hover:bg-white hover:text-black transition-colors duration-300"
         >
           Enter

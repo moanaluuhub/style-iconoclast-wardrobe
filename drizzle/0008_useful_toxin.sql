@@ -1,1 +1,0 @@
-ALTER TABLE `wardrobe_items` ADD `isOwned` boolean DEFAULT true NOT NULL;
