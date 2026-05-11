@@ -1,6 +1,6 @@
-import { signInWithGoogle } from "@/lib/supabase";
+import { signInWithGoogle, signInWithEmail, signUpWithEmail } from "@/lib/supabase";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "wouter";
 
 const HERO_IMG = "/manus-storage/hero-editorial_38095c00.jpg";
@@ -13,6 +13,12 @@ const MARQUEE_TEXT = "ARCHIVE · CATALOGUE · COMPOSE · TRACK · CURATE · ARCH
 export default function LoginPage() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [signupSent, setSignupSent] = useState(false);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -20,6 +26,33 @@ export default function LoginPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, loading]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      if (mode === "signup") {
+        const { error: err } = await signUpWithEmail(email, password);
+        if (err) throw err;
+        setSignupSent(true);
+      } else {
+        const { error: err } = await signInWithEmail(email, password);
+        if (err) throw err;
+        // Auth state subscription in useAuth invalidates the session query
+        // and the route guard redirects automatically.
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleMode = () => {
+    setMode((m) => (m === "signin" ? "signup" : "signin"));
+    setError(null);
+  };
 
   return (
     <div className="bg-white overflow-x-hidden">
@@ -58,15 +91,91 @@ export default function LoginPage() {
             className="w-full max-w-[57.2rem] object-contain mb-6"
           />
           <div className="w-10 h-px bg-black mb-8" />
-          <p className="text-[13px] text-[#5A5A5A] mb-10 leading-relaxed tracking-wide max-w-xs">
+          <p className="text-[12px] text-[#5A5A5A] mb-8 leading-relaxed tracking-wide max-w-xs">
             Your digital wardrobe. Organise what you own, shop what you want, and build your looks — all in one place.
           </p>
-          <button
-            onClick={() => { void signInWithGoogle(); }}
-            className="w-full max-w-xs bg-black text-white text-[10px] tracking-[0.22em] uppercase py-4 hover:bg-[#222] transition-colors"
-          >
-            Enter the Archive
-          </button>
+
+          {signupSent ? (
+            <div className="w-full max-w-xs">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#ACABAB] mb-3">
+                Check your inbox
+              </p>
+              <p className="text-[12px] text-[#5A5A5A] leading-relaxed mb-6">
+                We sent a confirmation link to <span className="text-black">{email}</span>.
+                Click it to finish creating your account, then return here to sign in.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSignupSent(false);
+                  setMode("signin");
+                  setPassword("");
+                  setError(null);
+                }}
+                className="text-[10px] tracking-[0.22em] uppercase underline text-black hover:no-underline"
+              >
+                ← Back to sign in
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email"
+                required
+                autoComplete="email"
+                disabled={submitting}
+                className="w-full border-b border-black bg-transparent px-0 py-2 text-[13px] tracking-wide placeholder:text-[#ACABAB] focus:outline-none focus:border-black"
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="password"
+                required
+                minLength={6}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                disabled={submitting}
+                className="w-full border-b border-black bg-transparent px-0 py-2 text-[13px] tracking-wide placeholder:text-[#ACABAB] focus:outline-none focus:border-black"
+              />
+              {error && (
+                <p className="text-[10px] text-red-600 tracking-wide mt-1">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-black text-white text-[10px] tracking-[0.22em] uppercase py-4 mt-2 hover:bg-[#222] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMode}
+                disabled={submitting}
+                className="text-[9px] tracking-[0.25em] uppercase text-[#5A5A5A] hover:text-black self-center"
+              >
+                {mode === "signin" ? "New here — create account" : "Already have an account — sign in"}
+              </button>
+
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-[#DEDEDE]" />
+                <span className="text-[9px] tracking-[0.3em] uppercase text-[#ACABAB]">or</span>
+                <div className="flex-1 h-px bg-[#DEDEDE]" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { void signInWithGoogle(); }}
+                disabled={submitting}
+                className="w-full border border-black text-black text-[10px] tracking-[0.22em] uppercase py-4 hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+              >
+                Continue with Google
+              </button>
+            </form>
+          )}
+
           <p className="text-[9px] text-[#DEDEDE] mt-5 tracking-wide">
             Private — your data is never shared
           </p>
@@ -195,7 +304,7 @@ export default function LoginPage() {
           Start your wardrobe
         </h2>
         <button
-          onClick={() => { void signInWithGoogle(); }}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           className="border border-white text-white text-[10px] tracking-[0.22em] uppercase px-12 py-4 hover:bg-white hover:text-black transition-colors duration-300"
         >
           Enter
