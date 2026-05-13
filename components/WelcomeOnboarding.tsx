@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Shirt, Layers, MapPin, ShoppingBag, BookOpen, ArrowRight, X, Award } from "lucide-react";
 
@@ -91,6 +91,7 @@ export default function WelcomeOnboarding({ forceOpen, onClose: onExternalClose 
         className="max-w-sm p-0 overflow-hidden border-0 rounded-none"
         style={{ fontFamily: "inherit" }}
       >
+        <DialogTitle className="sr-only">Welcome to Style Iconoclast</DialogTitle>
         {/* Close button */}
         <button
           onClick={dismiss}

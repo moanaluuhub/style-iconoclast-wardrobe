@@ -180,7 +180,21 @@ export async function extractFromUrl(
   }
   if (!merged.currency) merged.currency = "USD";
 
+  // Absolutise relative image URLs (some sites — e.g. The Attico — emit
+  // protocol-relative or path-only URLs in their JSON-LD).
+  if (merged.imageUrl) {
+    merged.imageUrl = absolutiseUrl(merged.imageUrl, fetched.finalUrl ?? inputUrl);
+  }
+
   return { product: merged, debug };
+}
+
+function absolutiseUrl(maybeRelative: string, base: string): string {
+  try {
+    return new URL(maybeRelative, base).toString();
+  } catch {
+    return maybeRelative;
+  }
 }
 
 // ─── Per-site parsers ────────────────────────────────────────────────────────
@@ -195,7 +209,84 @@ function parseKnownSite(url: URL): Partial<ExtractedProduct> | null {
   const host = url.hostname.replace(/^www\./, "").toLowerCase();
   if (NAP_GROUP_HOSTS.has(host)) return parseNapGroup(url, host);
   if (host === "zara.com") return parseZara(url);
+  if (host === "mytheresa.com") return parseMyTheresa(url);
   return null;
+}
+
+// Common luxury brand slugs to peel off the front of MyTheresa product slugs.
+// Order matters — longer multi-word slugs must come before their substrings.
+const MYTHERESA_BRANDS: ReadonlyArray<[string, string]> = [
+  ["alessandra-rich", "Alessandra Rich"],
+  ["bottega-veneta", "Bottega Veneta"],
+  ["dolce-gabbana", "Dolce & Gabbana"],
+  ["isabel-marant", "Isabel Marant"],
+  ["jacquemus", "Jacquemus"],
+  ["jimmy-choo", "Jimmy Choo"],
+  ["loro-piana", "Loro Piana"],
+  ["maison-margiela", "Maison Margiela"],
+  ["max-mara", "Max Mara"],
+  ["miu-miu", "Miu Miu"],
+  ["saint-laurent", "Saint Laurent"],
+  ["stella-mccartney", "Stella McCartney"],
+  ["the-row", "The Row"],
+  ["tom-ford", "Tom Ford"],
+  ["toteme", "Toteme"],
+  ["valentino", "Valentino"],
+  ["balenciaga", "Balenciaga"],
+  ["burberry", "Burberry"],
+  ["celine", "Celine"],
+  ["chloe", "Chloé"],
+  ["chloé", "Chloé"],
+  ["fendi", "Fendi"],
+  ["ganni", "Ganni"],
+  ["givenchy", "Givenchy"],
+  ["gucci", "Gucci"],
+  ["hermes", "Hermès"],
+  ["khaite", "Khaite"],
+  ["loewe", "Loewe"],
+  ["prada", "Prada"],
+  ["versace", "Versace"],
+  ["zimmermann", "Zimmermann"],
+];
+
+function parseMyTheresa(url: URL): Partial<ExtractedProduct> | null {
+  // Path shape: /<lang>/<country>/<gender>/<brand-slug>-<product-slug>-p<id>
+  // MyTheresa serves a bot-detection page on every server fetch (window.isBotPage),
+  // so the URL slug is all we have. Image cannot be derived (CDN paths are opaque).
+  const m = url.pathname.match(/\/(?:[a-z]{2}\/[a-z]{2}\/)?(?:femme|homme|kids)\/(.+)-p\d+\/?$/i);
+  if (!m) return null;
+  const slug = m[1].toLowerCase();
+
+  // Peel off a known brand slug if present.
+  let brand: string | null = null;
+  let productSlug = slug;
+  for (const [brandSlug, brandName] of MYTHERESA_BRANDS) {
+    if (slug.startsWith(`${brandSlug}-`)) {
+      brand = brandName;
+      productSlug = slug.slice(brandSlug.length + 1);
+      break;
+    }
+  }
+
+  return {
+    brand,
+    title: titleCase(productSlug),
+    category: mapMyTheresaCategory(productSlug),
+  };
+}
+
+function mapMyTheresaCategory(slug: string): Category {
+  const s = slug.toLowerCase();
+  if (/robe|dress/.test(s)) return "dresses";
+  if (/manteau|veste|blouson|trench|doudoune|coat|jacket|parka/.test(s)) return "outerwear";
+  if (/sandale|botte|botine|escarpin|baskets|sneaker|mules|loafer|shoe|boot|heel|pump/.test(s)) return "shoes";
+  if (/sac|tote|clutch|backpack|wallet|bag|porte/.test(s)) return "bags";
+  if (/jupe|pantalon|jean|short|legging|skirt|pant|trouser/.test(s)) return "bottoms";
+  if (/chemise|blouse|tshirt|t-shirt|pull|cardigan|debardeur|top|sweater|knit|tank/.test(s)) return "tops";
+  if (/costume|suit|tailoring/.test(s)) return "suits";
+  if (/sport|gym|yoga|running|active/.test(s)) return "activewear";
+  if (/bijoux|ceinture|echarpe|lunette|chapeau|jewel|hat|scarf|belt|sunglass/.test(s)) return "accessories";
+  return "other";
 }
 
 function parseZara(url: URL): Partial<ExtractedProduct> | null {
@@ -274,6 +365,7 @@ async function tryFetch(
   status: number | null;
   ua: string | null;
   challenge: boolean;
+  finalUrl: string | null;
   error: string | null;
 }> {
   for (const { label, headers } of HEADERS_TRIES) {
@@ -287,17 +379,17 @@ async function tryFetch(
       const challenge = isChallengePage(text);
       if (!res.ok) {
         if (label === HEADERS_TRIES[HEADERS_TRIES.length - 1].label) {
-          return { html: null, status: res.status, ua: label, challenge, error: null };
+          return { html: null, status: res.status, ua: label, challenge, finalUrl: res.url, error: null };
         }
         continue;
       }
       if (challenge) {
         if (label === HEADERS_TRIES[HEADERS_TRIES.length - 1].label) {
-          return { html: null, status: res.status, ua: label, challenge: true, error: null };
+          return { html: null, status: res.status, ua: label, challenge: true, finalUrl: res.url, error: null };
         }
         continue;
       }
-      return { html: text, status: res.status, ua: label, challenge: false, error: null };
+      return { html: text, status: res.status, ua: label, challenge: false, finalUrl: res.url, error: null };
     } catch (e) {
       if (label === HEADERS_TRIES[HEADERS_TRIES.length - 1].label) {
         return {
@@ -305,12 +397,13 @@ async function tryFetch(
           status: null,
           ua: label,
           challenge: false,
+          finalUrl: null,
           error: e instanceof Error ? e.message : String(e),
         };
       }
     }
   }
-  return { html: null, status: null, ua: null, challenge: false, error: "all attempts failed" };
+  return { html: null, status: null, ua: null, challenge: false, finalUrl: null, error: "all attempts failed" };
 }
 
 function isChallengePage(text: string): boolean {
