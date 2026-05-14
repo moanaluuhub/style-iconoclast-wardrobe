@@ -196,7 +196,7 @@ export default function SharedTripPage() {
 
       {/* Brand header */}
       <div className="border-b border-[#DEDEDE] px-6 py-4 flex items-center justify-between">
-        <img src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg" alt="Style Iconoclast" className="h-6 object-contain" />
+        <img src="/style-iconoclast-logo.jpg" alt="Style Iconoclast" className="h-6 object-contain" />
         <span className="text-[9px] tracking-[0.15em] uppercase text-[#ACABAB] border border-[#DEDEDE] px-2 py-1">Shared Trip</span>
       </div>
 
@@ -286,7 +286,7 @@ export default function SharedTripPage() {
 
         {/* Footer */}
         <div className="mt-12 pt-6 border-t border-[#DEDEDE] flex items-center justify-center">
-          <img src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg" alt="Style Iconoclast" className="h-5 object-contain opacity-60" />
+          <img src="/style-iconoclast-logo.jpg" alt="Style Iconoclast" className="h-5 object-contain opacity-60" />
         </div>
       </div>
     </div>

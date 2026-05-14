@@ -50,7 +50,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* Center: wordmark */}
             <Link href="/">
               <img
-                src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
+                src="/style-iconoclast-logo.jpg"
                 alt="Style Iconoclast"
                 className="h-[10.725rem] w-auto cursor-pointer select-none object-contain"
               />
@@ -185,7 +185,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <img
-              src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
+              src="/style-iconoclast-logo.jpg"
               alt="Style Iconoclast"
               className="h-[8.58rem] w-auto object-contain"
             />

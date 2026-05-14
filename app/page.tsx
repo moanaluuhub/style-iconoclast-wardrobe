@@ -371,7 +371,7 @@ export default function WardrobePage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
         <div className="text-center max-w-xs">
           <img
-            src="/manus-storage/style-iconoclast-logo-new_5932eaf0.jpeg"
+            src="/style-iconoclast-logo.jpg"
             alt="Style Iconoclast"
             className="w-full max-w-[18rem] object-contain mx-auto mb-6"
           />
