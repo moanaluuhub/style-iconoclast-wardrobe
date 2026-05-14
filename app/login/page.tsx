@@ -35,17 +35,33 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (mode === "signup") {
-        const { error: err } = await signUpWithEmail(email, password);
+        const { data, error: err } = await signUpWithEmail(email, password);
         if (err) throw err;
-        setSignupSent(true);
+        // With Supabase "Confirm email" turned off, signUp returns a usable
+        // session immediately and the user is logged in. Only show the
+        // "check your inbox" screen when no session came back (i.e. when
+        // Confirm email is enabled and the user must verify first).
+        if (data.session) {
+          router.replace("/");
+        } else {
+          setSignupSent(true);
+        }
       } else {
-        const { error: err } = await signInWithEmail(email, password);
+        const { data, error: err } = await signInWithEmail(email, password);
         if (err) throw err;
-        // Auth state subscription in useAuth invalidates the session query
-        // and the route guard redirects automatically.
+        if (!data.session) {
+          throw new Error("Sign-in succeeded but no session was returned.");
+        }
+        // Don't wait for the useAuth subscription to invalidate auth.me —
+        // navigate now. The home page will hydrate the user from the fresh
+        // session.
+        router.replace("/");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      const msg = err instanceof Error ? err.message : "Authentication failed";
+      setError(msg);
+      // eslint-disable-next-line no-console
+      console.error("[Auth]", mode, msg, err);
     } finally {
       setSubmitting(false);
     }
