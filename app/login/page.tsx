@@ -106,7 +106,7 @@ export default function LoginPage() {
           <img
             src="/style-iconoclast-logo.jpg"
             alt="Style Iconoclast"
-            className="w-full max-w-[57.2rem] object-contain mb-6"
+            className="w-full max-w-[14rem] object-contain mb-6"
           />
           <div className="w-10 h-px bg-black mb-8" />
           <p className="text-[12px] text-[#5A5A5A] mb-8 leading-relaxed tracking-wide max-w-xs">
@@ -316,7 +316,7 @@ export default function LoginPage() {
         <img
           src="/style-iconoclast-logo.jpg"
           alt="Style Iconoclast"
-          className="h-[8.58rem] w-auto object-contain mx-auto mb-6 invert"
+          className="h-7 w-auto object-contain mx-auto mb-6 invert"
         />
         <h2 className="text-[28px] md:text-[36px] font-light text-white tracking-[0.08em] uppercase mb-8">
           Start your wardrobe
