@@ -373,7 +373,7 @@ export default function WardrobePage() {
           <img
             src="/style-iconoclast-logo.jpg"
             alt="Style Iconoclast"
-            className="w-full max-w-[18rem] object-contain mx-auto mb-6"
+            className="w-full max-w-[10rem] object-contain mx-auto mb-6"
           />
           <div className="w-8 h-px bg-black mx-auto my-6" />
           <p className="text-[12px] tracking-[0.06em] text-[#5A5A5A] mb-8 leading-relaxed">

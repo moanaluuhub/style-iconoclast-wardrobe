@@ -52,7 +52,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <img
                 src="/style-iconoclast-logo.jpg"
                 alt="Style Iconoclast"
-                className="h-[10.725rem] w-auto cursor-pointer select-none object-contain"
+                className="h-6 w-auto cursor-pointer select-none object-contain"
               />
             </Link>
 
@@ -187,7 +187,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <img
               src="/style-iconoclast-logo.jpg"
               alt="Style Iconoclast"
-              className="h-[8.58rem] w-auto object-contain"
+              className="h-5 w-auto object-contain opacity-60"
             />
             <p className="text-[10px] tracking-[0.12em] uppercase text-[#ACABAB]">
               Own your style
